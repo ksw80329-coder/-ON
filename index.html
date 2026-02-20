@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>사주ON</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 토스페이먼츠 SDK -->
-  <script src="https://js.tosspayments.com/v1/payment"></script>
+
   <!-- Firebase SDK (Compat 버전 - 전역 객체 방식) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -397,7 +396,7 @@ function analyzeSaju(year, month, day, hour, minute, isLunar, isLeapMonth) {
 
 // ========== SDK 초기화 ==========
 const KAKAO_APP_KEY = 'f68dda02192f5417b547eb2db8368d3d';
-const TOSS_CLIENT_KEY = 'test_ck_6BYq7GWPVvnLQM6kRJ77VNE5vbo1';
+const BANK_INFO = { bank: '토스뱅크', account: '1000-7553-8936', holder: '고승우(사주ON)' };
 
 // 카카오 SDK는 <head>에서 이미 초기화됨 (중복 방지)
 console.log('Kakao 초기화 상태:', window.Kakao?.isInitialized());
@@ -1482,53 +1481,48 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
     setShowPayment(true);
   };
 
-  // ===== 토스페이먼츠 실결제 요청 =====
-  const requestTossPayment = async (method) => {
+  // ===== 카카오페이 결제 요청 (Kakao.Pay API) =====
+  const requestKakaoPay = async () => {
     if (!paymentProduct) return;
+    if (!window.Kakao || !window.Kakao.isInitialized()) {
+      alert('카카오 SDK가 초기화되지 않았습니다. 페이지를 새로고침 해주세요.');
+      return;
+    }
     try {
-      const tossPayments = window.TossPayments(TOSS_CLIENT_KEY);
-      const orderId = `SAJUON_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      // 토스페이먼츠는 successUrl에 paymentKey, orderId, amount를 자동으로 붙여서 리다이렉트
-      const baseUrl = window.location.origin + window.location.pathname;
-      const successUrl = baseUrl + '?payment=success' + (window.location.hash ? '&hash=' + encodeURIComponent(window.location.hash.slice(1)) : '');
-      const failUrl = baseUrl + '?payment=fail';
-
-      // 결제 전 상태 저장 (리다이렉트 후 복원용)
-      const pendingData = {
+      const orderId = `SAJUON_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+      sessionStorage.setItem('sajuon_pending_payment', JSON.stringify({
         product: paymentProduct,
+        orderId,
         currentInput,
         currentResult,
-        orderId,
-        compatResult: (() => {
-          const p1 = savedSaju.find(s => String(s.id) === String(compatPerson1));
-          const p2 = savedSaju.find(s => String(s.id) === String(compatPerson2));
-          if (!p1 || !p2) return null;
-          return { id: Date.now(), person1Id: compatPerson1, person2Id: compatPerson2, person1Name: p1.name, person2Name: p2.name, relation: compatRelation, date: new Date().toLocaleDateString('ko-KR') };
-        })(),
-        yearlyResult: (() => {
-          const p = savedSaju.find(s => String(s.id) === String(yearlyPerson));
-          if (!p) return null;
-          return { id: Date.now(), personId: yearlyPerson, personName: p.name, date: new Date().toLocaleDateString('ko-KR') };
-        })()
-      };
-      sessionStorage.setItem('sajuon_pending_payment', JSON.stringify(pendingData));
-
-      const methodKey = method === '카카오페이' ? '카카오페이' : method === '토스페이' ? '토스페이' : '카드';
-      await tossPayments.requestPayment(methodKey, {
-        amount: paymentProduct.price,
-        orderId,
-        orderName: paymentProduct.name,
-        customerName: userEmail || '사주ON 이용자',
-        successUrl,
-        failUrl,
-        ...(methodKey === '카드' ? { cardInstallmentPlan: true } : {})
+      }));
+      window.Kakao.Pay.ready({
+        cid: 'TC0ONETIME',  // 테스트용 CID (실서비스: 카카오페이 가맹점 CID)
+        partner_order_id: orderId,
+        partner_user_id: userEmail || 'sajuon_user',
+        item_name: paymentProduct.name,
+        quantity: 1,
+        total_amount: paymentProduct.price,
+        vat_amount: Math.round(paymentProduct.price / 11),
+        tax_free_amount: 0,
+        approval_url: `${window.location.origin}${window.location.pathname}?kakaopay=success`,
+        fail_url: `${window.location.origin}${window.location.pathname}?kakaopay=fail`,
+        cancel_url: `${window.location.origin}${window.location.pathname}?kakaopay=cancel`,
+        success: (res) => {
+          sessionStorage.removeItem('sajuon_pending_payment');
+          handlePaymentComplete();
+          setShowPayment(false);
+        },
+        fail: (err) => {
+          sessionStorage.removeItem('sajuon_pending_payment');
+          console.error('카카오페이 실패:', err);
+          alert('결제에 실패했습니다. 다시 시도해주세요.');
+        }
       });
-    } catch (err) {
+    } catch(err) {
       sessionStorage.removeItem('sajuon_pending_payment');
-      if (err.code !== 'USER_CANCEL') {
-        console.error('토스페이먼츠 오류:', err);
-        alert(`결제 오류: ${err.message || '잠시 후 다시 시도해주세요.'}`);
-      }
+      console.error('카카오페이 오류:', err);
+      alert('결제 처리 중 오류가 발생했습니다.');
     }
   };
 
@@ -4757,7 +4751,7 @@ ${isSangsaeng
         ),
         // 카카오페이
         React.createElement('button', {
-          onClick: () => requestTossPayment('카카오페이'),
+          onClick: () => requestKakaoPay(),
           className: 'w-full flex items-center gap-4 p-4 bg-[#FEE500] text-black rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all'
         },
           React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-black/10 flex items-center justify-center' },
@@ -4771,9 +4765,9 @@ ${isSangsaeng
           ),
           React.createElement('span', { className: 'text-black/40' }, '→')
         ),
-        // 신용/체크카드
+        // 신용/체크카드 (준비중)
         React.createElement('button', {
-          onClick: () => requestTossPayment('카드'),
+          onClick: () => alert('신용·체크카드 결제는 PG사 심사 후 제공됩니다.\n현재 카카오페이 또는 계좌이체를 이용해주세요.'),
           className: 'w-full flex items-center gap-4 p-4 bg-[#0064FF] text-white rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all'
         },
           React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl' }, '💳'),
@@ -4783,9 +4777,9 @@ ${isSangsaeng
           ),
           React.createElement('span', { className: 'text-white/40' }, '→')
         ),
-        // 토스페이
+        // 토스페이 (준비중)
         React.createElement('button', {
-          onClick: () => requestTossPayment('토스페이'),
+          onClick: () => alert('토스페이 결제는 PG사 심사 후 제공됩니다.\n현재 카카오페이 또는 계좌이체를 이용해주세요.'),
           className: 'w-full flex items-center gap-4 p-4 bg-white text-black rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all border border-gray-200'
         },
           React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-[#0064FF]/10 flex items-center justify-center' },
@@ -4797,82 +4791,10 @@ ${isSangsaeng
           ),
           React.createElement('span', { className: 'text-black/30' }, '→')
         ),
-        // 계좌이체
-        React.createElement('button', {
-          onClick: () => setPayStep('transfer'),
-          className: 'w-full flex items-center gap-4 p-4 glass rounded-2xl font-bold hover:bg-white/10 active:scale-[0.98] transition-all'
-        },
-          React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-xl' }, '🏦'),
-          React.createElement('div', { className: 'flex-1 text-left' },
-            React.createElement('p', { className: 'font-bold' }, '계좌이체'),
-            React.createElement('p', { className: 'text-xs text-gray-500' }, '무통장 입금 · 수동 확인')
-          ),
-          React.createElement('span', { className: 'text-gray-500' }, '→')
-        )
+
       )
     );
 
-    // ── 단계3: 계좌이체 안내 ──
-    const TransferStep = () => {
-      const BANK_ACCOUNT = '토스뱅크 1000-7553-8936 고승우(사주ON)';
-      return React.createElement('div', { className: 'flex flex-col h-full' },
-        React.createElement('div', { className: 'flex items-center gap-3 p-5 border-b border-white/10' },
-          React.createElement('button', { onClick: () => setPayStep('method'), className: 'text-xl text-gray-400 hover:text-white' }, '←'),
-          React.createElement('h2', { className: 'font-bold text-lg flex-1' }, '계좌이체'),
-          React.createElement('button', { onClick: close, className: 'text-2xl text-gray-400 hover:text-white' }, '×')
-        ),
-        React.createElement('div', { className: 'flex-1 p-5 space-y-4' },
-          // 안내
-          React.createElement('div', { className: 'glass rounded-2xl p-4 border border-amber-500/30 bg-amber-500/5' },
-            React.createElement('p', { className: 'text-xs font-bold text-amber-400 mb-2 flex items-center gap-1' }, '⚠️ 입금 안내'),
-            React.createElement('p', { className: 'text-xs text-gray-300 leading-relaxed' },
-              '입금자 성함을 정확히 입력해주세요. 입금 확인 후 서비스가 수동으로 지급됩니다. (영업일 기준 1~2시간 소요)'
-            )
-          ),
-          // 계좌 정보
-          React.createElement('div', { className: 'glass rounded-2xl p-5' },
-            React.createElement('p', { className: 'text-xs text-gray-400 mb-1' }, '입금 계좌'),
-            React.createElement('p', { className: 'text-lg font-bold text-white mb-4' }, BANK_ACCOUNT),
-            React.createElement('div', { className: 'flex justify-between items-center py-2 border-t border-white/10' },
-              React.createElement('span', { className: 'text-sm text-gray-400' }, '입금 금액'),
-              React.createElement('span', { className: 'font-bold text-purple-400' }, `₩${paymentProduct?.price?.toLocaleString()}`)
-            ),
-            React.createElement('button', {
-              onClick: () => { navigator.clipboard?.writeText(BANK_ACCOUNT); alert('계좌번호가 복사되었습니다.'); },
-              className: 'w-full mt-3 py-2.5 glass rounded-xl text-sm font-medium hover:bg-white/10 transition-all'
-            }, '📋 계좌번호 복사')
-          ),
-          // 입금자 성함
-          React.createElement('div', { className: 'glass rounded-2xl p-4' },
-            React.createElement('p', { className: 'text-xs text-gray-400 mb-2 font-medium' }, '입금자 성함 (필수)'),
-            React.createElement('input', {
-              className: 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-purple-500/50',
-              placeholder: '실제 입금하실 성함을 입력해주세요',
-              value: transferName,
-              onChange: e => setTransferName(e.target.value)
-            })
-          )
-        ),
-        React.createElement('div', { className: 'p-5 border-t border-white/10' },
-          React.createElement('button', {
-            onClick: () => {
-              if (!transferName.trim()) { alert('입금자 성함을 입력해주세요.'); return; }
-              alert(`입금 확인 요청이 접수되었습니다.\n입금자: ${transferName}\n금액: ₩${paymentProduct?.price?.toLocaleString()}\n입금 확인 후 서비스가 지급됩니다.`);
-              close();
-            },
-            className: 'w-full py-4 gradient-primary rounded-2xl font-bold'
-          }, '입금 완료 후 확인 요청')
-        )
-      );
-    };
-
-    return React.createElement('div', { className: 'fixed inset-0 bg-black/70 flex items-end justify-center z-50' },
-      React.createElement('div', { className: 'bg-[#1a1a2e] rounded-t-3xl w-full max-w-lg flex flex-col', style: { maxHeight: '92vh' } },
-        payStep === 'order'    && React.createElement(OrderStep),
-        payStep === 'method'   && React.createElement(MethodStep),
-        payStep === 'transfer' && React.createElement(TransferStep)
-      )
-    );
   };
 
   // 별 충전 모달
@@ -4884,58 +4806,40 @@ ${isSangsaeng
       { stars: 200, moons: 40, price: 19000, label: '최고 가성비' }
     ];
     
-    const handleCharge = async (pkg, method) => {
-      // 실제 토스페이먼츠 결제 요청
-      try {
-        const tossPayments = window.TossPayments(TOSS_CLIENT_KEY);
-        const orderId = `CHARGE_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-        const baseUrl = window.location.origin + window.location.pathname;
-        
-        // 충전 정보를 sessionStorage에 저장 (결제 후 복원용)
-        sessionStorage.setItem('sajuon_pending_payment', JSON.stringify({
-          product: { 
-            name: `별 ${pkg.stars}개 충전`, 
-            price: pkg.price,
-            type: 'charge',
-            stars: pkg.stars,
-            moons: pkg.moons
-          },
-          orderId
-        }));
+    const [chargeStep, setChargeStep] = React.useState('list'); // 'list' | 'kakao' | 'transfer'
+    const [selectedPkg, setSelectedPkg] = React.useState(null);
 
-        setShowChargeModal(false);
-
-        if (method === '카카오페이') {
-          // 카카오페이 전용 결제창
-          await tossPayments.requestPayment('카카오페이', {
-            amount: pkg.price,
-            orderId,
-            orderName: `사주ON 별 ${pkg.stars}개 충전`,
-            customerName: userEmail || '사주ON 회원',
-            successUrl: baseUrl + '?payment=success',
-            failUrl: baseUrl + '?payment=fail',
-          });
-        } else {
-          // 카드/계좌이체 전용 결제창
-          await tossPayments.requestPayment('카드', {
-            amount: pkg.price,
-            orderId,
-            orderName: `사주ON 별 ${pkg.stars}개 충전`,
-            customerName: userEmail || '사주ON 회원',
-            successUrl: baseUrl + '?payment=success',
-            failUrl: baseUrl + '?payment=fail',
-            cardInstallmentPlan: true,
-          });
-        }
-      } catch(err) {
-        sessionStorage.removeItem('sajuon_pending_payment');
-        if (err.code !== 'USER_CANCEL') {
-          alert(`결제 오류: ${err.message || '잠시 후 다시 시도해주세요.'}`);
-        }
-        setShowChargeModal(true);
+    const handleKakaoCharge = (pkg) => {
+      if (!window.Kakao || !window.Kakao.isInitialized()) {
+        alert('카카오 SDK가 초기화되지 않았습니다.');
+        return;
       }
+      const orderId = `CHARGE_${Date.now()}`;
+      window.Kakao.Pay.ready({
+        cid: 'TC0ONETIME',
+        partner_order_id: orderId,
+        partner_user_id: userEmail || 'sajuon_user',
+        item_name: `사주ON 별 ${pkg.stars}개 충전`,
+        quantity: 1,
+        total_amount: pkg.price,
+        vat_amount: Math.round(pkg.price / 11),
+        tax_free_amount: 0,
+        approval_url: `${window.location.origin}${window.location.pathname}?kakaopay=charge&stars=${pkg.stars}&moons=${pkg.moons}`,
+        fail_url: `${window.location.origin}${window.location.pathname}?kakaopay=fail`,
+        cancel_url: `${window.location.origin}${window.location.pathname}?kakaopay=cancel`,
+        success: () => {
+          setStars(p => { const n = p + pkg.stars; if (userKey) saveUserData(userKey,'stars',n); return n; });
+          if (pkg.moons > 0) setMoons(p => { const n = p + pkg.moons; if (userKey) saveUserData(userKey,'moons',n); return n; });
+          setShowChargeModal(false);
+          alert(`✅ 충전 완료!
+⭐ ${pkg.stars}별${pkg.moons > 0 ? ` + 🌙 ${pkg.moons}달` : ''} 지급되었습니다.`);
+        },
+        fail: () => alert('결제에 실패했습니다.')
+      });
     };
     
+    const [chargeTransferName, setChargeTransferName] = React.useState('');
+
     return React.createElement('div', { className: 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4' },
       React.createElement('div', { className: 'bg-[#1a1a2e] rounded-2xl p-6 w-full max-w-sm' },
         React.createElement('div', { className: 'flex justify-between items-center mb-6' },
@@ -4976,15 +4880,12 @@ ${isSangsaeng
                 React.createElement('span', { className: 'font-bold text-purple-400' }, `₩${pkg.price.toLocaleString()}`)
               ),
               // 결제 버튼
-              React.createElement('div', { className: 'grid grid-cols-2 border-t border-white/10' },
+              React.createElement('div', { className: 'border-t border-white/10' },
                 React.createElement('button', {
-                  onClick: () => handleCharge(pkg, '카카오페이'),
-                  className: 'py-2.5 text-xs font-bold bg-[#FEE500] text-black hover:brightness-95 transition-all'
-                }, '💛 카카오페이'),
-                React.createElement('button', {
-                  onClick: () => handleCharge(pkg, '카드'),
-                  className: 'py-2.5 text-xs font-bold bg-[#0064FF] text-white hover:brightness-95 transition-all'
-                }, '💳 카드결제')
+                  onClick: () => handleKakaoCharge(pkg),
+                  className: 'w-full py-3 text-sm font-bold bg-[#FEE500] text-black hover:brightness-95 transition-all rounded-b-xl'
+                }, '💛 카카오페이로 충전'),
+
               )
             )
           )
