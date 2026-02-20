@@ -1513,26 +1513,16 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
       };
       sessionStorage.setItem('sajuon_pending_payment', JSON.stringify(pendingData));
 
-      if (method === '카카오페이') {
-        await tossPayments.requestPayment('카카오페이', {
-          amount: paymentProduct.price,
-          orderId,
-          orderName: paymentProduct.name,
-          customerName: userEmail || '사주ON 이용자',
-          successUrl,
-          failUrl,
-        });
-      } else {
-        await tossPayments.requestPayment('카드', {
-          amount: paymentProduct.price,
-          orderId,
-          orderName: paymentProduct.name,
-          customerName: userEmail || '사주ON 이용자',
-          successUrl,
-          failUrl,
-          cardInstallmentPlan: true,
-        });
-      }
+      const methodKey = method === '카카오페이' ? '카카오페이' : method === '토스페이' ? '토스페이' : '카드';
+      await tossPayments.requestPayment(methodKey, {
+        amount: paymentProduct.price,
+        orderId,
+        orderName: paymentProduct.name,
+        customerName: userEmail || '사주ON 이용자',
+        successUrl,
+        failUrl,
+        ...(methodKey === '카드' ? { cardInstallmentPlan: true } : {})
+      });
     } catch (err) {
       sessionStorage.removeItem('sajuon_pending_payment');
       if (err.code !== 'USER_CANCEL') {
@@ -4669,70 +4659,218 @@ ${isSangsaeng
   };
 
   const PaymentModal = () => {
-    const requiredStars = Math.ceil(paymentProduct?.price / 100); // 1별 = 100원
+    const [payStep, setPayStep] = React.useState('order'); // 'order' | 'method' | 'transfer'
+    const [agreedTerms, setAgreedTerms] = React.useState(false);
+    const [transferName, setTransferName] = React.useState('');
+    const requiredStars = Math.ceil((paymentProduct?.price || 0) / 100);
     const canPayWithStars = stars >= requiredStars;
-    
-    const handleStarPayment = () => {
-      if (canPayWithStars) {
-        setStars(prev => prev - requiredStars);
-        handlePaymentComplete();
-      }
-    };
-    
-    return React.createElement('div', { className: 'fixed inset-0 bg-black/70 flex items-end justify-center z-50' },
-      React.createElement('div', { className: 'bg-[#1a1a2e] rounded-t-3xl p-6 w-full max-w-lg' },
-        React.createElement('div', { className: 'flex justify-between items-center mb-6' },
-          React.createElement('h2', { className: 'text-xl font-bold' }, '결제하기'),
-          React.createElement('button', { onClick: () => setShowPayment(false), className: 'text-2xl text-gray-400' }, '×')
-        ),
-        React.createElement('div', { className: 'glass rounded-xl p-4 mb-4' },
-          React.createElement('div', { className: 'flex justify-between items-center' },
-            React.createElement('span', { className: 'font-bold' }, paymentProduct?.name),
+
+    const close = () => { setShowPayment(false); setPayStep('order'); setAgreedTerms(false); };
+
+    // ── 단계1: 주문 확인 ──
+    const OrderStep = () => React.createElement('div', { className: 'flex flex-col h-full' },
+      // 헤더
+      React.createElement('div', { className: 'flex items-center justify-between p-5 border-b border-white/10' },
+        React.createElement('h2', { className: 'font-bold text-lg' }, '주문 확인 및 결제'),
+        React.createElement('button', { onClick: close, className: 'text-2xl text-gray-400 hover:text-white' }, '×')
+      ),
+      React.createElement('div', { className: 'flex-1 overflow-y-auto p-5 space-y-4' },
+        // 주문 상품
+        React.createElement('div', { className: 'glass rounded-2xl p-4' },
+          React.createElement('p', { className: 'text-xs text-gray-400 mb-3 font-medium' }, '주문 상품'),
+          React.createElement('div', { className: 'flex items-center justify-between' },
+            React.createElement('div', null,
+              React.createElement('p', { className: 'font-bold text-base' }, paymentProduct?.name),
+              React.createElement('p', { className: 'text-xs text-gray-400 mt-0.5' }, paymentProduct?.desc || 'AI 기반 개인 맞춤 분석')
+            ),
             React.createElement('div', { className: 'text-right' },
-              React.createElement('span', { className: 'text-xl font-bold text-purple-400' }, `₩${paymentProduct?.price?.toLocaleString()}`),
-              React.createElement('p', { className: 'text-xs text-gray-400' }, `= ⭐ ${requiredStars}별`)
+              React.createElement('p', { className: 'text-xl font-bold text-purple-400' }, `₩${paymentProduct?.price?.toLocaleString()}`),
+              React.createElement('p', { className: 'text-xs text-gray-500' }, `= ⭐ ${requiredStars}별`)
             )
           )
         ),
-        // 별로 결제 섹션
-        isLoggedIn && React.createElement('div', { className: 'mb-4' },
-          React.createElement('div', { className: 'flex items-center justify-between mb-2' },
-            React.createElement('span', { className: 'text-sm text-gray-400' }, '보유 별'),
-            React.createElement('span', { className: 'font-bold' }, `⭐ ${stars}별`)
-          ),
-          canPayWithStars 
-            ? React.createElement('button', { 
-                onClick: handleStarPayment, 
-                className: 'w-full py-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-black rounded-xl font-bold mb-2'
-              }, `⭐ ${requiredStars}별로 결제하기`)
-            : React.createElement('button', { 
-                onClick: () => { setShowPayment(false); setShowChargeModal(true); }, 
-                className: 'w-full py-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold mb-2'
-              }, `별이 부족해요 (${requiredStars - stars}별 더 필요) → 충전하기`)
+        // 최종 결제금액
+        React.createElement('div', { className: 'glass rounded-2xl p-4' },
+          React.createElement('div', { className: 'flex justify-between items-center' },
+            React.createElement('span', { className: 'text-sm text-gray-400' }, '최종 결제 금액'),
+            React.createElement('span', { className: 'text-xl font-bold text-white' }, `₩${paymentProduct?.price?.toLocaleString()}`)
+          )
         ),
-        // 구분선
-        React.createElement('div', { className: 'flex items-center gap-4 my-4' },
-          React.createElement('div', { className: 'flex-1 h-px bg-white/20' }),
-          React.createElement('span', { className: 'text-gray-500 text-xs' }, '또는 바로 결제'),
-          React.createElement('div', { className: 'flex-1 h-px bg-white/20' })
-        ),
-        React.createElement('div', { className: 'space-y-3' },
-          // 카카오페이 (토스페이먼츠 통해 처리)
-          React.createElement('button', {
-            onClick: () => requestTossPayment('카카오페이'),
-            className: 'w-full py-4 bg-[#FEE500] text-black rounded-xl font-bold flex items-center justify-center gap-2'
-          },
-            React.createElement('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' },
-              React.createElement('path', { d: 'M12 3C7.03 3 3 6.36 3 10.5c0 2.64 1.7 4.96 4.27 6.26-.19.7-.7 2.56-.8 2.96 0 0-.01.09.04.13.05.04.11.02.11.02.14-.02 1.66-1.1 2.33-1.57.67.1 1.36.15 2.05.15 4.97 0 9-3.36 9-7.5S16.97 3 12 3z' })
-            ),
-            '카카오페이로 결제'
+        // 별로 즉시 결제
+        isLoggedIn && React.createElement('div', { className: `glass rounded-2xl p-4 ${canPayWithStars ? 'border border-yellow-500/30' : ''}` },
+          React.createElement('div', { className: 'flex items-center justify-between mb-3' },
+            React.createElement('span', { className: 'text-sm font-medium' }, '⭐ 보유 별로 결제'),
+            React.createElement('span', { className: `text-sm font-bold ${canPayWithStars ? 'text-yellow-400' : 'text-gray-500'}` }, `${stars}별 보유`)
           ),
-          // 카드 / 계좌이체 (토스페이먼츠)
-          React.createElement('button', {
-            onClick: () => requestTossPayment('카드'),
-            className: 'w-full py-4 bg-[#0064FF] text-white rounded-xl font-bold'
-          }, '💳 카드 / 계좌이체')
+          canPayWithStars
+            ? React.createElement('button', {
+                onClick: () => {
+                  if (!agreedTerms) { alert('주문 내용 확인 및 약관 동의가 필요합니다.'); return; }
+                  setStars(p => p - requiredStars);
+                  handlePaymentComplete();
+                  close();
+                },
+                className: 'w-full py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-black rounded-xl font-bold text-sm'
+              }, `⭐ ${requiredStars}별로 즉시 결제`)
+            : React.createElement('button', {
+                onClick: () => { close(); setShowChargeModal(true); },
+                className: 'w-full py-3 bg-white/10 text-gray-400 rounded-xl text-sm'
+              }, `별 부족 (${requiredStars - stars}별 더 필요) → 충전하기`)
+        ),
+        // 약관 동의
+        React.createElement('div', {
+          onClick: () => setAgreedTerms(!agreedTerms),
+          className: 'flex items-start gap-3 cursor-pointer glass rounded-xl p-3 hover:bg-white/5'
+        },
+          React.createElement('div', { className: `mt-0.5 w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${agreedTerms ? 'bg-purple-500 border-purple-500' : 'border-white/30'}` },
+            agreedTerms && React.createElement('span', { className: 'text-white text-xs font-bold' }, '✓')
+          ),
+          React.createElement('p', { className: 'text-xs text-gray-400 leading-relaxed' },
+            '위 주문 내용을 확인하였으며, 이용약관 및 개인정보 처리방침에 동의합니다. AI 콘텐츠 특성상 열람 후 환불이 제한될 수 있습니다.'
+          )
         )
+      ),
+      // 결제수단 선택 버튼
+      React.createElement('div', { className: 'p-5 border-t border-white/10' },
+        React.createElement('button', {
+          onClick: () => {
+            if (!agreedTerms) { alert('주문 내용 확인 및 약관에 동의해주세요.'); return; }
+            setPayStep('method');
+          },
+          className: 'w-full py-4 gradient-primary rounded-2xl font-bold text-base'
+        }, '결제 수단 선택하기 →')
+      )
+    );
+
+    // ── 단계2: 결제 수단 선택 ──
+    const MethodStep = () => React.createElement('div', { className: 'flex flex-col h-full' },
+      React.createElement('div', { className: 'flex items-center gap-3 p-5 border-b border-white/10' },
+        React.createElement('button', { onClick: () => setPayStep('order'), className: 'text-xl text-gray-400 hover:text-white' }, '←'),
+        React.createElement('h2', { className: 'font-bold text-lg flex-1' }, '결제 수단 선택'),
+        React.createElement('button', { onClick: close, className: 'text-2xl text-gray-400 hover:text-white' }, '×')
+      ),
+      React.createElement('div', { className: 'flex-1 p-5 space-y-3' },
+        // 주문 요약
+        React.createElement('div', { className: 'glass rounded-xl p-3 flex justify-between items-center mb-2' },
+          React.createElement('span', { className: 'text-sm text-gray-300' }, paymentProduct?.name),
+          React.createElement('span', { className: 'font-bold text-purple-400' }, `₩${paymentProduct?.price?.toLocaleString()}`)
+        ),
+        // 카카오페이
+        React.createElement('button', {
+          onClick: () => requestTossPayment('카카오페이'),
+          className: 'w-full flex items-center gap-4 p-4 bg-[#FEE500] text-black rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all'
+        },
+          React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-black/10 flex items-center justify-center' },
+            React.createElement('svg', { width: '22', height: '22', viewBox: '0 0 24 24', fill: 'currentColor' },
+              React.createElement('path', { d: 'M12 3C7.03 3 3 6.36 3 10.5c0 2.64 1.7 4.96 4.27 6.26-.19.7-.7 2.56-.8 2.96 0 0-.01.09.04.13.05.04.11.02.11.02.14-.02 1.66-1.1 2.33-1.57.67.1 1.36.15 2.05.15 4.97 0 9-3.36 9-7.5S16.97 3 12 3z' })
+            )
+          ),
+          React.createElement('div', { className: 'flex-1 text-left' },
+            React.createElement('p', { className: 'font-bold' }, '카카오페이'),
+            React.createElement('p', { className: 'text-xs text-black/50' }, '카카오페이 간편 결제')
+          ),
+          React.createElement('span', { className: 'text-black/40' }, '→')
+        ),
+        // 신용/체크카드
+        React.createElement('button', {
+          onClick: () => requestTossPayment('카드'),
+          className: 'w-full flex items-center gap-4 p-4 bg-[#0064FF] text-white rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all'
+        },
+          React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl' }, '💳'),
+          React.createElement('div', { className: 'flex-1 text-left' },
+            React.createElement('p', { className: 'font-bold' }, '신용 · 체크카드'),
+            React.createElement('p', { className: 'text-xs text-white/60' }, '국내외 카드 / 할부 가능')
+          ),
+          React.createElement('span', { className: 'text-white/40' }, '→')
+        ),
+        // 토스페이
+        React.createElement('button', {
+          onClick: () => requestTossPayment('토스페이'),
+          className: 'w-full flex items-center gap-4 p-4 bg-white text-black rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all border border-gray-200'
+        },
+          React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-[#0064FF]/10 flex items-center justify-center' },
+            React.createElement('span', { className: 'text-[#0064FF] font-black text-lg' }, 'T')
+          ),
+          React.createElement('div', { className: 'flex-1 text-left' },
+            React.createElement('p', { className: 'font-bold' }, '토스페이'),
+            React.createElement('p', { className: 'text-xs text-black/50' }, '토스 간편 결제')
+          ),
+          React.createElement('span', { className: 'text-black/30' }, '→')
+        ),
+        // 계좌이체
+        React.createElement('button', {
+          onClick: () => setPayStep('transfer'),
+          className: 'w-full flex items-center gap-4 p-4 glass rounded-2xl font-bold hover:bg-white/10 active:scale-[0.98] transition-all'
+        },
+          React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-xl' }, '🏦'),
+          React.createElement('div', { className: 'flex-1 text-left' },
+            React.createElement('p', { className: 'font-bold' }, '계좌이체'),
+            React.createElement('p', { className: 'text-xs text-gray-500' }, '무통장 입금 · 수동 확인')
+          ),
+          React.createElement('span', { className: 'text-gray-500' }, '→')
+        )
+      )
+    );
+
+    // ── 단계3: 계좌이체 안내 ──
+    const TransferStep = () => {
+      const BANK_ACCOUNT = '토스뱅크 1000-7553-8936 고승우(사주ON)';
+      return React.createElement('div', { className: 'flex flex-col h-full' },
+        React.createElement('div', { className: 'flex items-center gap-3 p-5 border-b border-white/10' },
+          React.createElement('button', { onClick: () => setPayStep('method'), className: 'text-xl text-gray-400 hover:text-white' }, '←'),
+          React.createElement('h2', { className: 'font-bold text-lg flex-1' }, '계좌이체'),
+          React.createElement('button', { onClick: close, className: 'text-2xl text-gray-400 hover:text-white' }, '×')
+        ),
+        React.createElement('div', { className: 'flex-1 p-5 space-y-4' },
+          // 안내
+          React.createElement('div', { className: 'glass rounded-2xl p-4 border border-amber-500/30 bg-amber-500/5' },
+            React.createElement('p', { className: 'text-xs font-bold text-amber-400 mb-2 flex items-center gap-1' }, '⚠️ 입금 안내'),
+            React.createElement('p', { className: 'text-xs text-gray-300 leading-relaxed' },
+              '입금자 성함을 정확히 입력해주세요. 입금 확인 후 서비스가 수동으로 지급됩니다. (영업일 기준 1~2시간 소요)'
+            )
+          ),
+          // 계좌 정보
+          React.createElement('div', { className: 'glass rounded-2xl p-5' },
+            React.createElement('p', { className: 'text-xs text-gray-400 mb-1' }, '입금 계좌'),
+            React.createElement('p', { className: 'text-lg font-bold text-white mb-4' }, BANK_ACCOUNT),
+            React.createElement('div', { className: 'flex justify-between items-center py-2 border-t border-white/10' },
+              React.createElement('span', { className: 'text-sm text-gray-400' }, '입금 금액'),
+              React.createElement('span', { className: 'font-bold text-purple-400' }, `₩${paymentProduct?.price?.toLocaleString()}`)
+            ),
+            React.createElement('button', {
+              onClick: () => { navigator.clipboard?.writeText(BANK_ACCOUNT); alert('계좌번호가 복사되었습니다.'); },
+              className: 'w-full mt-3 py-2.5 glass rounded-xl text-sm font-medium hover:bg-white/10 transition-all'
+            }, '📋 계좌번호 복사')
+          ),
+          // 입금자 성함
+          React.createElement('div', { className: 'glass rounded-2xl p-4' },
+            React.createElement('p', { className: 'text-xs text-gray-400 mb-2 font-medium' }, '입금자 성함 (필수)'),
+            React.createElement('input', {
+              className: 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-purple-500/50',
+              placeholder: '실제 입금하실 성함을 입력해주세요',
+              value: transferName,
+              onChange: e => setTransferName(e.target.value)
+            })
+          )
+        ),
+        React.createElement('div', { className: 'p-5 border-t border-white/10' },
+          React.createElement('button', {
+            onClick: () => {
+              if (!transferName.trim()) { alert('입금자 성함을 입력해주세요.'); return; }
+              alert(`입금 확인 요청이 접수되었습니다.\n입금자: ${transferName}\n금액: ₩${paymentProduct?.price?.toLocaleString()}\n입금 확인 후 서비스가 지급됩니다.`);
+              close();
+            },
+            className: 'w-full py-4 gradient-primary rounded-2xl font-bold'
+          }, '입금 완료 후 확인 요청')
+        )
+      );
+    };
+
+    return React.createElement('div', { className: 'fixed inset-0 bg-black/70 flex items-end justify-center z-50' },
+      React.createElement('div', { className: 'bg-[#1a1a2e] rounded-t-3xl w-full max-w-lg flex flex-col', style: { maxHeight: '92vh' } },
+        payStep === 'order'    && React.createElement(OrderStep),
+        payStep === 'method'   && React.createElement(MethodStep),
+        payStep === 'transfer' && React.createElement(TransferStep)
       )
     );
   };
