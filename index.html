@@ -5,12 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>사주ON</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 카카오 로그인 SDK -->
-  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" 
-          integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEvu4SAcv8iHmal9Br4Te7i9/RRD+" 
-          crossorigin="anonymous"></script>
   <!-- 토스페이먼츠 SDK -->
   <script src="https://js.tosspayments.com/v1/payment"></script>
+  <!-- 카카오 로그인 SDK -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+  <script>
+    window.KAKAO_APP_KEY = 'f68dda02192f5417b547eb2db8368d3d';
+    if (window.Kakao) {
+      if (!window.Kakao.isInitialized()) {
+        window.Kakao.init(window.KAKAO_APP_KEY);
+      }
+      console.log('✅ Kakao SDK 초기화:', window.Kakao.isInitialized());
+    } else {
+      console.error('❌ Kakao SDK 로딩 실패');
+    }
+  </script>
   <style>
     body { font-family: 'Noto Sans KR', sans-serif; background: #1a1a2e; }
     .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
@@ -373,10 +382,8 @@ function analyzeSaju(year, month, day, hour, minute, isLunar, isLeapMonth) {
 const KAKAO_APP_KEY = 'f68dda02192f5417b547eb2db8368d3d';
 const TOSS_CLIENT_KEY = 'test_ck_6BYq7GWPVvnLQM6kRJ77VNE5vbo1';
 
-// 카카오 SDK 초기화 (중복 방지)
-if (window.Kakao && !window.Kakao.isInitialized()) {
-  window.Kakao.init(KAKAO_APP_KEY);
-}
+// 카카오 SDK는 <head>에서 이미 초기화됨 (중복 방지)
+console.log('Kakao 초기화 상태:', window.Kakao?.isInitialized());
 
 // 토스 결제 성공 리턴 처리 (결제 후 페이지 복귀 시)
 const urlParams = new URLSearchParams(window.location.search);
@@ -4483,9 +4490,13 @@ ${isSangsaeng
           // 카카오 (실제 SDK 연동)
           React.createElement('button', {
             onClick: () => {
-              if (!window.Kakao || !window.Kakao.isInitialized()) {
-                alert('카카오 SDK 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+              const key = 'f68dda02192f5417b547eb2db8368d3d';
+              if (!window.Kakao) {
+                alert('카카오 SDK를 불러오지 못했습니다.\n잠시 후 페이지를 새로고침 해주세요.');
                 return;
+              }
+              if (!window.Kakao.isInitialized()) {
+                window.Kakao.init(key);
               }
               window.Kakao.Auth.login({
                 success: () => {
