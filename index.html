@@ -475,7 +475,6 @@ function App() {
   const session = getSessionAccount();
 
   const [showLogin, setShowLogin] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
   const [paymentProduct, setPaymentProduct] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(!!session);
   const [userEmail, setUserEmail] = useState(session?.email || '');
@@ -1528,8 +1527,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
     const updatedPurchases = [...purchases, newPurchase];
     setPurchases(updatedPurchases);
     if (userKey) saveUserData(userKey, 'purchases', updatedPurchases);
-    setShowPayment(false);
-    
+        
     if (paymentProduct.name === '상세 사주 분석') {
       // 상세 사주 분석 결과 저장
       if (currentInput && currentResult) {
@@ -4745,8 +4743,7 @@ ${isSangsaeng
         React.createElement('button', {
           onClick: () => requestKakaoPay(paymentProduct, (rsp) => {
             handlePaymentComplete();
-            setShowPayment(false);
-          }),
+                }),
           className: 'w-full flex items-center gap-4 p-4 bg-[#FEE500] text-black rounded-2xl font-bold hover:brightness-95 active:scale-[0.98] transition-all'
         },
           React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-black/10 flex items-center justify-center' },
@@ -4811,7 +4808,6 @@ ${isSangsaeng
 
     const onPaySuccess = () => {
       handlePaymentComplete();
-      setScreen(returnScreen);
     };
 
     const handlePay = (method) => {
@@ -4839,8 +4835,8 @@ ${isSangsaeng
     return React.createElement('div', { className: 'min-h-screen pb-10' },
       // 헤더
       React.createElement('div', { className: 'sticky top-14 z-10 flex items-center gap-3 px-4 py-4 bg-[#0f0f1a] border-b border-white/10' },
-        React.createElement('button', { onClick: () => history.back(), className: 'text-xl text-gray-400 hover:text-white' }, '←'),
-        React.createElement('h1', { className: 'font-bold text-lg flex-1' }, '주문 확인 및 결제'),
+        React.createElement('button', { onClick: () => setScreen('home'), className: 'text-xl text-gray-400 hover:text-white' }, '←'),
+        React.createElement('h1', { className: 'font-bold text-lg flex-1' }, '주문 확인 및 결제')
       ),
 
       React.createElement('div', { className: 'px-4 py-5 space-y-4 max-w-lg mx-auto' },
@@ -5869,7 +5865,6 @@ ${isSangsaeng
       )
     ),
     showLogin && React.createElement(LoginModal),
-    showPayment && React.createElement(PaymentModal),
     showChargeModal && React.createElement(ChargeModal),
     showSideMenu && React.createElement(SideMenu)
   );
