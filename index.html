@@ -4780,10 +4780,19 @@ ${isSangsaeng
           ),
           React.createElement('span', { className: 'text-black/30' }, '→')
         ),
-
       )
     );
 
+    // ── 최종 렌더 (step 분기) ──
+    return React.createElement('div', { className: 'fixed inset-0 bg-black/70 flex items-end justify-center z-50' },
+      React.createElement('div', {
+        className: 'bg-[#1a1a2e] rounded-t-3xl w-full max-w-lg flex flex-col',
+        style: { maxHeight: '92vh' }
+      },
+        payStep === 'order'  && React.createElement(OrderStep),
+        payStep === 'method' && React.createElement(MethodStep)
+      )
+    );
   };
 
   // 별 충전 모달
