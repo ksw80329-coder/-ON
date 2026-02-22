@@ -402,6 +402,7 @@ const KAKAO_APP_KEY = 'f68dda02192f5417b547eb2db8368d3d';
 const IMP_CODE        = 'imp60556156';                                   // 포트원 가맹점 식별코드
 const CHANNEL_KAKAO   = 'channel-key-75ce192f-2096-4d4b-af96-a53da4e69b13'; // 카카오페이 채널키
 const CHANNEL_TOSS    = 'channel-key-30262341-2209-4aab-93f3-805737438ec0';  // 토스페이 채널키
+const PAYMENT_WORKER  = 'https://sajuon-payment.godwk15.workers.dev';        // Cloudflare Worker
 
 // 카카오 SDK는 <head>에서 이미 초기화됨 (중복 방지)
 console.log('Kakao 초기화 상태:', window.Kakao?.isInitialized());
@@ -1512,9 +1513,33 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
       amount: product.price,
       buyer_email: userEmail || '',
       buyer_name: session?.nickname || userEmail || '사주ON 회원',
-    }, (rsp) => {
+    }, async (rsp) => {
       if (rsp.success) {
-        onSuccess(rsp);
+        try {
+          // Worker URL이 설정된 경우 서버 검증
+          if (PAYMENT_WORKER && !PAYMENT_WORKER.includes('YOUR_ID')) {
+            const verifyRes = await fetch(`${PAYMENT_WORKER}/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                imp_uid:      rsp.imp_uid,
+                merchant_uid: rsp.merchant_uid,
+                amount:       product.price,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyData.success) {
+              alert(`결제 검증 실패: ${verifyData.message}\n고객센터에 문의해주세요.`);
+              return;
+            }
+          }
+          // 검증 완료 (또는 Worker 미설정 시 바로 성공 처리)
+          onSuccess(rsp);
+        } catch (err) {
+          console.error('검증 오류:', err);
+          // 네트워크 오류 시에도 결제는 완료된 것으로 처리 (추후 수동 확인)
+          onSuccess(rsp);
+        }
       } else {
         const cancelled = rsp.error_code === 'F0000' || rsp.error_msg?.includes('취소') || rsp.error_msg?.includes('cancel');
         if (!cancelled) {
