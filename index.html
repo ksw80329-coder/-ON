@@ -402,7 +402,8 @@ const KAKAO_APP_KEY = 'f68dda02192f5417b547eb2db8368d3d';
 const IMP_CODE        = 'imp60556156';                                   // 포트원 가맹점 식별코드
 const CHANNEL_KAKAO   = 'channel-key-75ce192f-2096-4d4b-af96-a53da4e69b13'; // 카카오페이 채널키
 const CHANNEL_TOSS    = 'channel-key-30262341-2209-4aab-93f3-805737438ec0';  // 토스페이 채널키
-const PAYMENT_WORKER  = 'https://sajuon-payment.godwk15.workers.dev';        // Cloudflare Worker
+const PAYMENT_WORKER  = 'https://sajuon-payment.godwk15.workers.dev';
+const DEV_MODE = false; // ← true로 바꾸면 결제 없이 상세 사주 결과 바로 진입        // Cloudflare Worker
 
 // 카카오 SDK는 <head>에서 이미 초기화됨 (중복 방지)
 console.log('Kakao 초기화 상태:', window.Kakao?.isInitialized());
@@ -660,6 +661,99 @@ function App() {
   const [showChargeModal, setShowChargeModal] = useState(false);
   
   // 아코디언 아이템 컴포넌트
+  const SajuLoadingScreen = () => {
+    const messages = [
+      { icon: '🌌', text: '천지의 기운을 읽고 있습니다...' },
+      { icon: '☯️', text: '음양의 흐름을 살피고 있습니다...' },
+      { icon: '🔥', text: '오행의 강약을 분석하고 있습니다...' },
+      { icon: '⭐', text: '신살의 영향을 해석하고 있습니다...' },
+      { icon: '🌙', text: '달의 기운으로 내면을 살피고 있습니다...' },
+      { icon: '🪐', text: '하늘의 별자리와 대화 중입니다...' },
+      { icon: '🎋', text: '사주팔자의 비밀을 풀어내고 있습니다...' },
+      { icon: '🌊', text: '운명의 물결을 읽고 있습니다...' },
+    ];
+
+    const tips = [
+      '💡 일간(日干)은 나 자신을 나타내는 핵심 기둥입니다',
+      '💡 용신(用神)은 사주에서 가장 필요한 오행을 말합니다',
+      '💡 신살(神殺)은 타고난 특별한 기운의 표식입니다',
+      '💡 오행이 균형 잡힌 사주는 안정적인 삶을 나타냅니다',
+      '💡 월주(月柱)는 부모와 성장 환경을 보여줍니다',
+      '💡 시주(時柱)는 자식과 말년 운을 담고 있습니다',
+      '💡 도화살은 매력과 예술적 감각을 상징합니다',
+      '💡 백호살은 강한 추진력과 결단력을 나타냅니다',
+    ];
+
+    const [msgIdx, setMsgIdx] = React.useState(0);
+    const [tipIdx, setTipIdx] = React.useState(0);
+    const [visible, setVisible] = React.useState(true);
+
+    React.useEffect(() => {
+      const msgTimer = setInterval(() => {
+        setVisible(false);
+        setTimeout(() => {
+          setMsgIdx(p => (p + 1) % messages.length);
+          setVisible(true);
+        }, 400);
+      }, 2500);
+      const tipTimer = setInterval(() => {
+        setTipIdx(p => (p + 1) % tips.length);
+      }, 4000);
+      return () => { clearInterval(msgTimer); clearInterval(tipTimer); };
+    }, []);
+
+    const msg = messages[msgIdx];
+
+    return React.createElement('div', { className: 'py-12 px-6 text-center' },
+      // 중앙 애니메이션
+      React.createElement('div', { className: 'relative w-24 h-24 mx-auto mb-8' },
+        React.createElement('div', { 
+          className: 'absolute inset-0 rounded-full border-2 border-purple-500/30 animate-ping'
+        }),
+        React.createElement('div', { 
+          className: 'absolute inset-2 rounded-full border-2 border-purple-400/50 animate-spin',
+          style: { animationDuration: '3s' }
+        }),
+        React.createElement('div', { 
+          className: 'absolute inset-0 flex items-center justify-center text-4xl',
+          style: { transition: 'opacity 0.4s', opacity: visible ? 1 : 0 }
+        }, msg.icon)
+      ),
+
+      // 메시지
+      React.createElement('div', {
+        style: { transition: 'opacity 0.4s', opacity: visible ? 1 : 0, minHeight: '2rem' }
+      },
+        React.createElement('p', { className: 'text-white font-bold text-lg mb-1' }, msg.text)
+      ),
+
+      // 진행 바
+      React.createElement('div', { className: 'mt-6 mb-8 mx-auto max-w-xs' },
+        React.createElement('div', { className: 'h-1 bg-white/10 rounded-full overflow-hidden' },
+          React.createElement('div', {
+            className: 'h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full',
+            style: { animation: 'progressBar 20s linear forwards' }
+          })
+        )
+      ),
+
+      // 사주 상식 팁
+      React.createElement('div', { className: 'glass rounded-2xl p-4 max-w-xs mx-auto' },
+        React.createElement('p', { className: 'text-xs text-gray-500 mb-2 uppercase tracking-wide' }, '사주 상식'),
+        React.createElement('p', { 
+          className: 'text-sm text-gray-300',
+          key: tipIdx,
+          style: { animation: 'fadeIn 0.5s ease' }
+        }, tips[tipIdx])
+      ),
+
+      React.createElement('style', null, `
+        @keyframes progressBar { from { width: 0% } to { width: 95% } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
+      `)
+    );
+  };
+
   const AccordionItem = ({ icon, color, title, content }) => {
     const [isOpen, setIsOpen] = useState(false);
     return React.createElement('div', { className: 'border-b border-white/10 last:border-b-0' },
@@ -1479,6 +1573,12 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
 
   const openPayment = (product) => {
     if (!isLoggedIn) { setShowLogin(true); return; }
+    // 개발자 테스트 모드
+    if (DEV_MODE) {
+      setPaymentProduct(product);
+      handlePaymentComplete();
+      return;
+    }
     const requiredStars = product.stars || Math.ceil((product.price || 0) / 100);
     if (stars >= requiredStars) {
       // 별 충분 → 즉시 차감
@@ -2120,6 +2220,107 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
     
     const allSinsal = [...r.pillarSinsal.year, ...r.pillarSinsal.month, ...r.pillarSinsal.day, ...r.pillarSinsal.hour].filter((v, i, a) => a.indexOf(v) === i);
 
+    // ===== AI 해설 생성 =====
+    const [aiSections, setAiSections] = React.useState(null);
+    const [aiLoading, setAiLoading] = React.useState(false);
+    const [aiError, setAiError] = React.useState(false);
+
+    React.useEffect(() => {
+      const cacheKey = `ai_saju_${inp.name}_${inp.year}_${inp.month}_${inp.day}_${inp.hour}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try { setAiSections(JSON.parse(cached)); return; } catch(e) {}
+      }
+
+      setAiLoading(true);
+      setAiError(false);
+
+      const pillarDesc = ['year','month','day','hour'].map(k => {
+        const p = r.pillars[k];
+        if (!p) return '';
+        const sinsal = r.pillarSinsal[k]?.join(', ') || '없음';
+        return `${labels[k] === '연주' ? '연주' : labels[k] === '월주' ? '월주' : labels[k] === '일주' ? '일주' : '시주'}: 천간 ${p.stem}(${STEMS.korean[p.si]}, ${STEMS.elements[p.si]}), 지지 ${p.branch}(${p.branchKr || ''}) | 신살: ${sinsal}`;
+      }).filter(Boolean).join('\n');
+
+      const feDesc = Object.entries(r.fe.pct).map(([k,v]) => `${k}: ${v}%`).join(', ');
+      const strongEl = Object.entries(r.fe.pct).sort((a,b)=>b[1]-a[1])[0];
+      const weakEl = Object.entries(r.fe.pct).sort((a,b)=>a[1]-b[1])[0];
+
+      const prompt = `아래 만세력 데이터를 바탕으로 사주 분석 리포트를 생성하세요.
+
+[사용자 정보]
+이름: ${inp.name}
+성별: ${inp.gender}
+생년월일: ${inp.year}년 ${inp.month}월 ${inp.day}일 ${inp.hour !== 'unknown' ? inp.hour+'시' : '시간 모름'}
+음양력: ${inp.calendar}
+
+[만세력 원국]
+${pillarDesc}
+
+[오행 분포]
+${feDesc}
+강한 오행: ${strongEl[0]}(${strongEl[1]}%), 약한 오행: ${weakEl[0]}(${weakEl[1]}%)
+
+[전체 신살 목록]
+${allSinsal.length > 0 ? allSinsal.join(', ') : '없음'}
+
+[출력 규칙]
+반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
+각 섹션은 600~800자 내외로 깊이 있게 서술하세요.
+섹션 제목은 이 사주에만 해당하는 고유하고 인상적인 제목으로 작성하세요.
+신살의 영향을 각 섹션 해설에 반드시 반영하세요.
+
+{
+  "sections": [
+    {
+      "icon": "이모지",
+      "color": "text-pink-400 또는 text-purple-400 또는 text-yellow-400 등 tailwind 색상",
+      "title": "섹션 제목",
+      "content": "800자 내외 해설 내용"
+    }
+  ]
+}
+
+8개 섹션 주제 (순서대로):
+1. 정체성과 중심축 (일간의 본질, 타고난 기질)
+2. 성장 환경과 내적 패턴 (월주/연주 분석)
+3. 핵심 힘과 약점 (오행 강약, 용신)
+4. 갈등과 전환 구조 (충·합·신살의 역학)
+5. 사고와 판단 메커니즘 (식신·상관·인성 흐름)
+6. 인간관계와 사회적 위치 (관계 패턴, 대인운)
+7. 일·성과 전략 (직업운, 재물운)
+8. 현실적 조언과 성장 전략 (구체적 실천 방향)`;
+
+      fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 8000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        const text = data.content?.[0]?.text || '';
+        const clean = text.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(clean);
+        if (parsed.sections) {
+          setAiSections(parsed.sections);
+          try { localStorage.setItem(cacheKey, JSON.stringify(parsed.sections)); } catch(e) {}
+        } else {
+          setAiError(true);
+        }
+      })
+      .catch(err => {
+        console.error('AI 해설 오류:', err);
+        setAiError(true);
+      })
+      .finally(() => setAiLoading(false));
+    }, []);
+
+    const displaySections = aiSections || (aiError ? generateSajuInterpretation(r, inp) : null);
+
     return React.createElement('div', { className: 'min-h-screen p-4 pb-28' },
       React.createElement('header', { className: 'flex items-center gap-4 py-4' },
         React.createElement('button', { onClick: () => setScreen('input'), className: 'text-2xl' }, '←'),
@@ -2241,13 +2442,25 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
           )
         )
       ),
-      // 12개 섹션 심층 해설
+      // AI 사주 해설
       React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-        React.createElement('div', { className: 'p-3 gradient-primary text-white text-center font-bold' }, '사주 해설'),
-        React.createElement('div', { className: 'p-3 text-center text-gray-400 text-xs border-b border-white/10' }, '각 제목을 클릭하면 해설이 펼쳐져요'),
-        generateSajuInterpretation(r, inp).map((section, i) => 
-          React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
-        )
+        React.createElement('div', { className: 'p-3 gradient-primary text-white text-center font-bold flex items-center justify-center gap-2' },
+          '✨ AI 사주 해설',
+          aiLoading && React.createElement('span', { className: 'text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse' }, '생성 중...')
+        ),
+        aiLoading
+          ? React.createElement(SajuLoadingScreen)
+            
+          : displaySections
+            ? [
+                React.createElement('div', { key: 'hint', className: 'p-3 text-center text-gray-400 text-xs border-b border-white/10' },
+                  aiError ? '⚠️ AI 연결 실패 - 기본 해설로 표시합니다' : '각 제목을 클릭하면 해설이 펼쳐져요'
+                ),
+                ...displaySections.map((section, i) =>
+                  React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
+                )
+              ]
+            : React.createElement('div', { className: 'p-6 text-center text-gray-500 text-sm' }, '해설을 불러오는 중...')
       )
     );
   };
