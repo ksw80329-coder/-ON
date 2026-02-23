@@ -1699,6 +1699,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
           }]);
         }
       }
+      setIsReviewMode(false);
       setScreen('paid-result');
     } else if (prod.name === '궁합 분석') {
       // 궁합 결과 저장
@@ -1721,6 +1722,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
           }]);
         }
       }
+      setIsReviewMode(false);
       setScreen('compatibility-result');
     } else if (prod.name === '2026 신년운세') {
       // 신년운세 결과 저장
@@ -1736,6 +1738,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
           }]);
         }
       }
+      setIsReviewMode(false);
       setScreen('yearly-result');
     }
   };
@@ -1847,8 +1850,9 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
             if (alreadyPaidHome) {
               const paidHome = savedPaidSaju.find(p => p.name === currentInput.name && p.year === currentInput.year && p.month === currentInput.month && p.day === currentInput.day);
               if (paidHome) { setCurrentResult(paidHome.result); setCurrentInput({ name: paidHome.name, gender: paidHome.gender, year: paidHome.year, month: paidHome.month, day: paidHome.day, hour: paidHome.hour, minute: paidHome.minute, calendar: paidHome.calendar }); }
+              setIsReviewMode(true);
               setScreen('paid-result');
-            } else { openPayment({ name: '상세 사주 분석', price: 1900, stars: 19 }); }
+            } else { openPayment({ name: '상세 사주 분석', price: 2900, stars: 29 }); }
           }, 
           className: 'glass rounded-2xl p-5 cursor-pointer hover:bg-white/10 transition-all active:scale-[0.98] border-2 border-purple-500/40' 
         },
@@ -1861,7 +1865,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
               React.createElement('h3', { className: 'font-bold text-base' }, '상세 사주 분석'),
               React.createElement('p', { className: 'text-sm text-gray-400 mt-1' }, '8섹션 심층 해설 · 성격/직업/재물/연애')
             ),
-            React.createElement('span', { className: 'text-purple-400 font-bold text-lg' }, '₩1,900')
+            React.createElement('span', { className: 'text-purple-400 font-bold text-lg' }, '₩2,900')
           )
         ),
         // 궁합 분석
@@ -1875,7 +1879,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
               React.createElement('h3', { className: 'font-bold text-base' }, '궁합 분석'),
               React.createElement('p', { className: 'text-sm text-gray-400 mt-1' }, '연인/친구/직장 등 관계별 맞춤 분석')
             ),
-            React.createElement('span', { className: 'text-pink-400 font-bold text-lg' }, '₩990')
+            React.createElement('span', { className: 'text-pink-400 font-bold text-lg' }, '₩1,000')
           )
         ),
         // 신년운세
@@ -1892,7 +1896,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
               React.createElement('h3', { className: 'font-bold text-base' }, '신년운세'),
               React.createElement('p', { className: 'text-sm text-gray-400 mt-1' }, '월별 상세 운세 · 재물/연애/직장/건강')
             ),
-            React.createElement('span', { className: 'text-amber-400 font-bold text-lg' }, '₩4,900')
+            React.createElement('span', { className: 'text-amber-400 font-bold text-lg' }, '₩1,900')
           )
         )
       ),
@@ -2199,6 +2203,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
                 setCurrentResult(paidData.result);
                 setCurrentInput({ name: paidData.name, gender: paidData.gender, year: paidData.year, month: paidData.month, day: paidData.day, hour: paidData.hour, minute: paidData.minute, calendar: paidData.calendar });
               }
+              setIsReviewMode(true);
               setScreen('paid-result');
             },
             className: 'mt-6 w-full p-5 bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl'
@@ -2212,14 +2217,14 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
             )
           );
         }
-        return React.createElement('div', { onClick: () => openPayment({ name: '상세 사주 분석', price: 1900, stars: 19 }), className: 'mt-6 p-5 gradient-gold rounded-2xl cursor-pointer' },
+        return React.createElement('div', { onClick: () => openPayment({ name: '상세 사주 분석', price: 2900, stars: 29 }), className: 'mt-6 p-5 gradient-gold rounded-2xl cursor-pointer' },
           React.createElement('div', { className: 'flex justify-between items-center' },
             React.createElement('div', null,
               React.createElement('h3', { className: 'font-bold text-lg' }, '💎 더 깊은 분석이 궁금하다면?'),
               React.createElement('p', { className: 'text-sm text-white/80 mt-1' }, '8개 섹션 심층 해설 + 신살 분석')
             ),
             React.createElement('div', { className: 'text-right' },
-              React.createElement('span', { className: 'text-2xl font-bold' }, '₩1,900')
+              React.createElement('span', { className: 'text-2xl font-bold' }, '₩2,900')
             )
           )
         );
@@ -2243,7 +2248,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
 
     // ===== AI 해설 생성 =====
     const [aiSections, setAiSections] = React.useState(null);
-    const [aiLoading, setAiLoading] = React.useState(true);
+    const [aiLoading, setAiLoading] = React.useState(!isReviewMode);
     const [aiError, setAiError] = React.useState(false);
 
     React.useEffect(() => {
@@ -2562,10 +2567,10 @@ ${pillarDesc}
             alert('두 사람의 관계를 선택해주세요.');
             return;
           }
-          openPayment({ name: '궁합 분석', price: 990, stars: 10 });
+          openPayment({ name: '궁합 분석', price: 1000, stars: 10 });
         }, 
         className: 'w-full mt-6 py-4 gradient-gold rounded-2xl font-bold text-lg' 
-      }, '궁합 분석하기 ₩990'),
+      }, '궁합 분석하기 ₩1,000'),
       React.createElement('button', { 
         onClick: () => { setForm({ name:'', gender:'여성', calendar:'양력', year:'', month:'', day:'', hour:'', minute:'' }); setReturnScreen('compatibility'); setScreen('input'); }, 
         className: 'w-full mt-3 py-3 glass rounded-xl text-gray-400 text-sm' 
@@ -2587,6 +2592,7 @@ ${pillarDesc}
               setCompatPerson1(compat.person1Id);
               setCompatPerson2(compat.person2Id);
               setCompatRelation(compat.relation || 'couple');
+              setIsReviewMode(true);
               setScreen('compatibility-result');
             },
             className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all' 
@@ -2628,12 +2634,16 @@ ${pillarDesc}
 
     // ===== AI 궁합 해설 =====
     const [aiCompatSections, setAiCompatSections] = React.useState(null);
-    const [aiCompatLoading, setAiCompatLoading] = React.useState(true);
+    const [aiCompatLoading, setAiCompatLoading] = React.useState(!isReviewMode);
     const [aiCompatError, setAiCompatError] = React.useState(false);
 
     React.useEffect(() => {
       const cacheKey = `ai_compat_${person1.id}_${person2.id}_${compatRelation}`;
       // DEV: 캐시 무시
+      if (isReviewMode) {
+        try { const cached = localStorage.getItem(cacheKey); if (cached) { setAiCompatSections(JSON.parse(cached)); setAiCompatLoading(false); return; } } catch(e) {}
+        setAiCompatLoading(false); return;
+      }
 
       setAiCompatLoading(true);
       (() => {
@@ -2654,44 +2664,46 @@ ${pillarDesc}
           return `${({year:'연',month:'월',day:'일',hour:'시'})[k]}주: ${p.stem}(${STEMS.korean[p.si]},${STEMS.elements[p.si]}) / ${p.branch}`;
         }).filter(Boolean).join(', ');
 
-        const prompt = `당신은 명리학 전문가이자 뛰어난 글쓰기 감각을 가진 분석가입니다.
-아래 두 사람의 사주 데이터를 보고, 두 사람이 읽었을 때 "이게 진짜 우리 얘기다!" 싶을 만큼 생생한 궁합 분석을 작성하세요.
+        const prompt = `당신은 명리학 전문가이자 날카로운 인사이트를 가진 글쓰기 감각의 분석가입니다.
+아래 두 사람의 사주 데이터를 바탕으로, 두 사람이 "이게 진짜 우리 사이 얘기잖아!" 싶을 만큼 구체적이고 솔직한 궁합 분석을 써주세요.
 
-[${person1.name} (${person1.gender}) 사주]
+[${person1.name} (${person1.gender})]
 일간: ${STEMS.names[r1.dsi]}(${STEMS.korean[r1.dsi]}) — ${el1Full}오행
 만세력: ${p1PillarDesc}
 신살: ${p1Sinsal.join(', ') || '없음'}
 오행 분포: ${Object.entries(r1.fe.pct).map(([k,v])=>`${k}:${v}%`).join(', ')}
 
-[${person2.name} (${person2.gender}) 사주]
+[${person2.name} (${person2.gender})]
 일간: ${STEMS.names[r2.dsi]}(${STEMS.korean[r2.dsi]}) — ${el2Full}오행
 만세력: ${p2PillarDesc}
 신살: ${p2Sinsal.join(', ') || '없음'}
 오행 분포: ${Object.entries(r2.fe.pct).map(([k,v])=>`${k}:${v}%`).join(', ')}
 
-[관계 유형] ${relationLabel}
+[관계] ${relationLabel}
 
-[톤 & 스타일]
-- 두 사람 관계를 솔직하게, 좋은 것도 나쁜 것도 있는 그대로
-- MZ세대가 공감하는 언어로, 진부한 표현 금지 ("함께 성장", "뿌리를 내리는" 등 절대 금지)
-- 두 사람 이름(${person1.name}, ${person2.name}) 자연스럽게 여러 번 언급
-- 오행 상생/상극, 신살, 천간합·지지합 구체적 근거 필수
-- 섹션 제목은 이 두 사람만의 이야기가 담긴 문장 (예: "${el1Full}와 ${el2Full}의 만남 — 끌리지만 때로는 소진되는 이유")
+[핵심 작성 원칙]
+- 두 사람의 이름(${person1.name}, ${person2.name})을 반드시 수시로 언급 — "A와 B" 형태로 구체적으로
+- 오행 상생/상극, 일간 관계, 신살, 천간합·지지충 등 명리학 근거를 자연스럽게 녹여서 설명
+- 딱딱한 한자 나열 금지, 쉽게 풀어서 설명
+- "함께 성장", "뿌리를 내리는", "내실을 다지는" 같은 진부한 표현 완전 금지
+- 좋은 것만 쓰지 말고 실제 마찰 포인트, 서로 짜증나는 부분도 솔직하게
+- 각 섹션 제목: 이 두 사람만의 에너지와 스토리가 담긴 문장 (예: "${el1Full}이 ${el2Full}를 만났을 때 — 끌리지만 소진되는 이유", "${person1.name}이 ${person2.name}에게 자꾸 기대는 사주적 이유")
+- 각 섹션은 완전히 다른 주제와 관점
 
-[출력 형식 - JSON만, 다른 텍스트 없이]
+[출력 형식 — JSON만, 다른 텍스트 없이]
 {
   "sections": [
-    { "icon": "이모지", "color": "tailwind 텍스트 색상 클래스", "title": "두 사람 전용 제목", "content": "700~900자 분석" }
+    { "icon": "이모지", "color": "tailwind 텍스트 색상", "title": "두 사람 전용 제목", "content": "700~900자" }
   ]
 }
 
-6개 섹션 작성:
-1. 이 두 사람의 기운이 만나면 무슨 일이 생기나 — ${el1Full}(${STEMS.korean[r1.dsi]})와 ${el2Full}(${STEMS.korean[r2.dsi]})의 상생/상극 구조, 첫인상부터 장기적 궁합까지
-2. 두 사람의 감정 언어가 얼마나 다른가 — 각자의 일간이 만드는 표현 방식 차이, 서로 오해하기 쉬운 포인트
-3. ${relationLabel} 관계에서 이 조합의 현실 — 잘 맞는 부분과 마찰이 생기는 상황, 역할 분담의 자연스러운 패턴
-4. 둘이 싸울 때 왜 그렇게 싸우는가 — 신살과 오행 충돌이 만드는 갈등 패턴, 화해하는 법
-5. 이 두 사람이 함께 잘 나가는 조건 — 시너지가 폭발하는 상황, 서로의 약점을 채워주는 구조
-6. ${person1.name}님과 ${person2.name}님 각자에게 — 이 관계를 더 좋게 만들 수 있는 개인별 조언`;
+6개 섹션:
+1. 이 두 사람의 기운이 처음 만났을 때 — ${el1Full}(${STEMS.korean[r1.dsi]})와 ${el2Full}(${STEMS.korean[r2.dsi]})의 상생/상극/합충 구조, 서로 첫인상부터 어떻게 작용하는지, 장기적으로 이 관계가 어디로 흘러가는지
+2. ${person1.name}의 감정 표현 방식 vs ${person2.name}의 감정 표현 방식 — 일간이 만드는 근본적 차이, 서로 오해하고 상처받는 구체적 패턴, 소통이 꼬이는 진짜 이유
+3. ${relationLabel}으로서 이 두 사람의 현실 — 실제로 이 관계에서 잘 맞는 장면과 마찰이 생기는 장면, 자연스럽게 형성되는 역할 구조
+4. 둘이 싸울 때 무슨 일이 벌어지나 — 신살과 오행 충돌이 만드는 반복되는 갈등 패턴, 왜 같은 싸움을 반복하는지, 화해하고 관계 지속하는 법
+5. 이 두 사람이 함께 있을 때 빛나는 순간 — 시너지가 터지는 구체적 상황과 환경, 서로의 약점을 채워주는 구조, 같이 하면 좋은 것들
+6. ${person1.name}에게, 그리고 ${person2.name}에게 — 각자에게 드리는 솔직한 개인 조언, 이 관계를 더 잘 굴러가게 만드는 각자의 실천법`;
 
         const minLoadC = new Promise(resolve => setTimeout(resolve, 10000));
         const aiFetchC = fetch('https://sajuon-payment.godwk15.workers.dev/ai', {
@@ -4599,9 +4611,10 @@ ${isSangsaeng
           if (!isLoggedIn) { setShowLogin(true); return; }
           const alreadyYearlyPaid = savedYearly.some(y => String(y.personId) === String(yearlyPerson));
           if (alreadyYearlyPaid) {
+            setIsReviewMode(true);
             setScreen('yearly-result');
           } else {
-            openPayment({ name: '2026 신년운세', price: 4900, stars: 49 });
+            openPayment({ name: '2026 신년운세', price: 1900, stars: 19 });
           }
         }, 
         className: (() => {
@@ -4610,7 +4623,7 @@ ${isSangsaeng
         })()
       }, (() => {
         const alreadyBought = savedYearly.some(y => String(y.personId) === String(yearlyPerson));
-        return alreadyBought ? '🎊 구매한 운세 다시보기' : '신년운세 보기 ₩4,900';
+        return alreadyBought ? '🎊 구매한 운세 다시보기' : '신년운세 보기 ₩1,900';
       })())
     ),
     // 이전 신년운세 결과
@@ -4625,6 +4638,7 @@ ${isSangsaeng
             key: i, 
             onClick: () => {
               setYearlyPerson(yearly.personId);
+              setIsReviewMode(true);
               setScreen('yearly-result');
             },
             className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all' 
@@ -4667,7 +4681,7 @@ ${isSangsaeng
 
     // ===== AI 신년운세 해설 =====
     const [aiYearlySections, setAiYearlySections] = React.useState(null);
-    const [aiYearlyLoading, setAiYearlyLoading] = React.useState(true);
+    const [aiYearlyLoading, setAiYearlyLoading] = React.useState(!isReviewMode);
     const [aiYearlyError, setAiYearlyError] = React.useState(false);
 
     React.useEffect(() => {
@@ -4924,6 +4938,7 @@ ${pillarDesc2}
               calendar: saju.calendar
             });
             setCurrentResult(saju.result);
+            setIsReviewMode(true);
             setScreen('paid-result');
           },
           className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl mb-2 cursor-pointer hover:bg-white/10' 
@@ -4951,6 +4966,7 @@ ${pillarDesc2}
             setCompatPerson1(compat.person1Id);
             setCompatPerson2(compat.person2Id);
             setCompatRelation(compat.relation || 'couple');
+            setIsReviewMode(true);
             setScreen('compatibility-result');
           },
           className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl mb-2 cursor-pointer hover:bg-white/10' 
@@ -4974,6 +4990,7 @@ ${pillarDesc2}
           key: i, 
           onClick: () => {
             setYearlyPerson(yearly.personId);
+            setIsReviewMode(true);
             setScreen('yearly-result');
           },
           className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl mb-2 cursor-pointer hover:bg-white/10' 
@@ -5903,6 +5920,7 @@ ${pillarDesc2}
                         calendar: saju.calendar
                       });
                       setCurrentResult(saju.result);
+                      setIsReviewMode(true);
                       setScreen('paid-result');
                     },
                     className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all' 
@@ -5937,6 +5955,7 @@ ${pillarDesc2}
                       setCompatPerson1(compat.person1Id);
                       setCompatPerson2(compat.person2Id);
                       setCompatRelation(compat.relation || 'couple');
+                      setIsReviewMode(true);
                       setScreen('compatibility-result');
                     },
                     className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all' 
@@ -5967,6 +5986,7 @@ ${pillarDesc2}
                     key: i, 
                     onClick: () => {
                       setYearlyPerson(yearly.personId);
+                      setIsReviewMode(true);
                       setScreen('yearly-result');
                     },
                     className: 'flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all' 
