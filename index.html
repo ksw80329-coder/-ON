@@ -2236,7 +2236,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
       setAiLoading(true);
       setAiError(false);
 
-      await new Promise(resolve => setTimeout(resolve, 15000)); // 테스트용 15초 지연
+      await new Promise(resolve => setTimeout(resolve, 15000));
 
       const pillarDesc = ['year','month','day','hour'].map(k => {
         const p = r.pillars[k];
@@ -2960,8 +2960,24 @@ ${allSinsal.length > 0 ? allSinsal.join(', ') : '없음'}
           )
         )
       ),
-      // 13개 심층 분석 아코디언 섹션 - 관계 유형별로 다른 내용
-      React.createElement('div', { className: 'glass rounded-2xl mt-4 overflow-hidden' },
+      // 심층 풀이: AI 로딩 중이면 로딩화면, 완료되면 AI, 에러시 템플릿
+      aiCompatLoading
+        ? React.createElement('div', { className: 'glass rounded-2xl mt-4 overflow-hidden' },
+            React.createElement('div', { className: 'p-3 gradient-primary text-white text-center font-bold flex items-center justify-center gap-2' },
+              '✨ 궁합 심층 풀이',
+              React.createElement('span', { className: 'text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse' }, '천기 해독 중...')
+            ),
+            React.createElement(SajuLoadingScreen)
+          )
+        : aiCompatSections
+          ? React.createElement('div', { className: 'glass rounded-2xl mt-4 overflow-hidden' },
+              React.createElement('div', { className: 'p-3 gradient-primary text-white text-center font-bold' }, '✨ 궁합 심층 풀이'),
+              React.createElement('div', { className: 'p-3 text-center text-gray-400 text-xs border-b border-white/10' }, '각 제목을 클릭하면 풀이가 펼쳐져요'),
+              aiCompatSections.map((section, i) =>
+                React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
+              )
+            )
+          : React.createElement('div', { className: 'glass rounded-2xl mt-4 overflow-hidden' },
         React.createElement('h3', { className: 'font-bold p-5 pb-3' }, 
           compatRelation === 'couple' ? `💑 ${person1.name} & ${person2.name} 연인 궁합 심층 분석` :
           compatRelation === 'parent' ? `👨‍👧 ${person1.name} & ${person2.name} 부모-자녀 관계 분석` :
@@ -4468,23 +4484,6 @@ ${isSangsaeng
         )
       ),
 
-      // AI 궁합 심층 풀이
-      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-        React.createElement('div', { className: 'p-3 gradient-primary text-white text-center font-bold flex items-center justify-center gap-2' },
-          '✨ 궁합 심층 풀이',
-          aiCompatLoading && React.createElement('span', { className: 'text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse' }, '천기 해독 중...')
-        ),
-        aiCompatLoading
-          ? React.createElement(SajuLoadingScreen)
-          : (aiCompatSections || aiCompatError)
-            ? [
-                React.createElement('div', { key: 'hint', className: 'p-3 text-center text-gray-400 text-xs border-b border-white/10' }, '각 제목을 클릭하면 풀이가 펼쳐져요'),
-                ...(aiCompatSections || []).map((section, i) =>
-                  React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
-                )
-              ]
-            : React.createElement('div', { className: 'p-6 text-center text-gray-500 text-sm' }, '풀이를 불러오는 중...')
-      )
     );
   };
 
@@ -4711,54 +4710,54 @@ ${isSangsaeng
           )
         )
       ),
-      // 월별 운세 상세
-      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-        React.createElement('div', { className: 'p-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center font-bold' }, '📅 월별 운세'),
-        React.createElement('p', { className: 'text-xs text-gray-400 text-center py-3 border-b border-white/10' }, '💡 각 월을 클릭하면 상세 운세를 확인할 수 있습니다'),
-        // 월별 상세 해설 아코디언
-        React.createElement('div', { className: 'divide-y divide-white/10' },
-          yearlyData.monthlyFortunes.map((m, i) => 
-            React.createElement(AccordionItem, { 
-              key: i, 
-              icon: m.score >= 70 ? '🌟' : m.score >= 50 ? '💪' : '🛡️',
-              color: m.score >= 70 ? 'text-green-400' : m.score >= 50 ? 'text-yellow-400' : 'text-red-400',
-              title: `${m.month} — ${m.monthTitle || m.keyword}`,
-              content: m.fullDetail || m.advice
-            })
+      // AI 로딩 중이면 로딩화면, 완료되면 AI, 에러시 템플릿 월별+분야별
+      aiYearlyLoading
+        ? React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+            React.createElement('div', { className: 'p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-bold flex items-center justify-center gap-2' },
+              '✨ 2026년 운세 심층 풀이',
+              React.createElement('span', { className: 'text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse' }, '천기 해독 중...')
+            ),
+            React.createElement(SajuLoadingScreen)
           )
-        )
-      ),
-      // 분야별 운세 상세
-      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-        React.createElement('div', { className: 'p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center font-bold' }, '🎯 분야별 상세 운세'),
-        ['wealth', 'love', 'career', 'health'].map(key => {
-          const cat = yearlyData.categoryFortunes[key];
-          return React.createElement(AccordionItem, { 
-            key: key, 
-            icon: cat.title.split(' ')[0], 
-            color: key === 'wealth' ? 'text-emerald-400' : key === 'love' ? 'text-pink-400' : key === 'career' ? 'text-blue-400' : 'text-red-400',
-            title: cat.title.split(' ')[1],
-            content: `${cat.summary}\n\n${cat.detail}`
-          });
-        })
-      ),
-      // AI 신년운세 심층 풀이
-      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-        React.createElement('div', { className: 'p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-bold flex items-center justify-center gap-2' },
-          '✨ 2026년 운세 심층 풀이',
-          aiYearlyLoading && React.createElement('span', { className: 'text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse' }, '천기 해독 중...')
-        ),
-        aiYearlyLoading
-          ? React.createElement(SajuLoadingScreen)
-          : (aiYearlySections || aiYearlyError)
-            ? [
-                React.createElement('div', { key: 'hint', className: 'p-3 text-center text-gray-400 text-xs border-b border-white/10' }, '각 제목을 클릭하면 풀이가 펼쳐져요'),
-                ...(aiYearlySections || []).map((section, i) =>
-                  React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
+        : aiYearlySections
+          ? React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+              React.createElement('div', { className: 'p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-bold' }, '✨ 2026년 운세 심층 풀이'),
+              React.createElement('div', { className: 'p-3 text-center text-gray-400 text-xs border-b border-white/10' }, '각 제목을 클릭하면 풀이가 펼쳐져요'),
+              aiYearlySections.map((section, i) =>
+                React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
+              )
+            )
+          : React.createElement('div', null,
+              // 에러시 기존 템플릿 월별+분야별 표시
+              React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+                React.createElement('div', { className: 'p-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center font-bold' }, '📅 월별 운세'),
+                React.createElement('p', { className: 'text-xs text-gray-400 text-center py-3 border-b border-white/10' }, '💡 각 월을 클릭하면 상세 운세를 확인할 수 있습니다'),
+                React.createElement('div', { className: 'divide-y divide-white/10' },
+                  yearlyData.monthlyFortunes.map((m, i) =>
+                    React.createElement(AccordionItem, {
+                      key: i,
+                      icon: m.score >= 70 ? '🌟' : m.score >= 50 ? '💪' : '🛡️',
+                      color: m.score >= 70 ? 'text-green-400' : m.score >= 50 ? 'text-yellow-400' : 'text-red-400',
+                      title: `${m.month} — ${m.monthTitle || m.keyword}`,
+                      content: m.fullDetail || m.advice
+                    })
+                  )
                 )
-              ]
-            : React.createElement('div', { className: 'p-6 text-center text-gray-500 text-sm' }, '풀이를 불러오는 중...')
-      ),
+              ),
+              React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+                React.createElement('div', { className: 'p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center font-bold' }, '🎯 분야별 상세 운세'),
+                ['wealth', 'love', 'career', 'health'].map(key => {
+                  const cat = yearlyData.categoryFortunes[key];
+                  return React.createElement(AccordionItem, {
+                    key: key,
+                    icon: cat.title.split(' ')[0],
+                    color: key === 'wealth' ? 'text-emerald-400' : key === 'love' ? 'text-pink-400' : key === 'career' ? 'text-blue-400' : 'text-red-400',
+                    title: cat.title.split(' ')[1],
+                    content: `${cat.summary}\n\n${cat.detail}`
+                  });
+                })
+              )
+            ),
 
       // 행운 정보
       React.createElement('div', { className: 'glass rounded-2xl p-5 mt-4' },
