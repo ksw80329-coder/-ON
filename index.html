@@ -5017,37 +5017,127 @@ ${pillarDesc2}
   );
 
   const LoginModal = () => {
+    const [emailTab, setEmailTab] = React.useState(false);
+    const [emailMode, setEmailMode] = React.useState('login');
+    const [emailInput, setEmailInput] = React.useState('');
+    const [pwInput, setPwInput] = React.useState('');
+    const [pwConfirm, setPwConfirm] = React.useState('');
+    const [nickInput, setNickInput] = React.useState('');
+    const [emailLoading, setEmailLoading] = React.useState(false);
+    const [emailError, setEmailError] = React.useState('');
+
+    const handleEmailAuth = async () => {
+      setEmailError('');
+      if (!emailInput || !pwInput) { setEmailError('이메일과 비밀번호를 입력해주세요.'); return; }
+      if (emailMode === 'signup' && pwInput !== pwConfirm) { setEmailError('비밀번호가 일치하지 않습니다.'); return; }
+      if (emailMode === 'signup' && pwInput.length < 6) { setEmailError('비밀번호는 6자 이상이어야 합니다.'); return; }
+      setEmailLoading(true);
+      const auth = window._firebaseAuth;
+      try {
+        if (emailMode === 'signup') {
+          const result = await auth.createUserWithEmailAndPassword(emailInput, pwInput);
+          const nickname = nickInput.trim() || emailInput.split('@')[0];
+          await result.user.updateProfile({ displayName: nickname });
+          handleLogin('email', emailInput, nickname);
+        } else {
+          const result = await auth.signInWithEmailAndPassword(emailInput, pwInput);
+          handleLogin('email', emailInput, result.user.displayName || emailInput.split('@')[0]);
+        }
+      } catch(err) {
+        const msg = {
+          'auth/email-already-in-use': '이미 사용 중인 이메일입니다.',
+          'auth/invalid-email': '올바른 이메일 형식이 아닙니다.',
+          'auth/user-not-found': '등록되지 않은 이메일입니다.',
+          'auth/wrong-password': '비밀번호가 틀렸습니다.',
+          'auth/invalid-credential': '이메일 또는 비밀번호가 틀렸습니다.',
+          'auth/too-many-requests': '시도 횟수 초과. 잠시 후 다시 시도해주세요.',
+          'auth/weak-password': '비밀번호가 너무 약합니다.'
+        }[err.code] || '오류가 발생했습니다. 다시 시도해주세요.';
+        setEmailError(msg);
+      } finally {
+        setEmailLoading(false);
+      }
+    };
+
+    if (emailTab) {
+      return React.createElement('div', { className: 'fixed inset-0 z-[210] flex flex-col bg-[#1a1a2e]' },
+        React.createElement('div', { className: 'flex items-center justify-between px-5 py-4 border-b border-white/10' },
+          React.createElement('button', {
+            onClick: () => { setEmailTab(false); setEmailError(''); setEmailInput(''); setPwInput(''); setPwConfirm(''); setNickInput(''); },
+            className: 'p-2 hover:bg-white/10 rounded-lg'
+          }, React.createElement('span', { className: 'text-gray-300 text-xl' }, '←')),
+          React.createElement('span', { className: 'font-bold text-white' }, emailMode === 'login' ? '이메일 로그인' : '이메일 회원가입'),
+          React.createElement('div', { className: 'w-10' })
+        ),
+        React.createElement('div', { className: 'flex-1 flex flex-col items-center justify-center px-6 pb-10' },
+          React.createElement('div', { className: 'text-center mb-8' },
+            React.createElement('div', { className: 'text-4xl mb-3' }, '✉️'),
+            React.createElement('h2', { className: 'text-xl font-bold' }, emailMode === 'login' ? '로그인' : '회원가입')
+          ),
+          React.createElement('div', { className: 'w-full max-w-sm flex bg-white/5 rounded-xl p-1 mb-6' },
+            React.createElement('button', {
+              onClick: () => { setEmailMode('login'); setEmailError(''); },
+              className: 'flex-1 py-2 rounded-lg text-sm font-medium transition-all ' + (emailMode === 'login' ? 'bg-purple-600 text-white' : 'text-gray-400')
+            }, '로그인'),
+            React.createElement('button', {
+              onClick: () => { setEmailMode('signup'); setEmailError(''); },
+              className: 'flex-1 py-2 rounded-lg text-sm font-medium transition-all ' + (emailMode === 'signup' ? 'bg-purple-600 text-white' : 'text-gray-400')
+            }, '회원가입')
+          ),
+          React.createElement('div', { className: 'w-full max-w-sm space-y-3' },
+            emailMode === 'signup' && React.createElement('input', {
+              type: 'text', placeholder: '닉네임 (선택사항)',
+              value: nickInput, onChange: e => setNickInput(e.target.value),
+              className: 'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500'
+            }),
+            React.createElement('input', {
+              type: 'email', placeholder: '이메일',
+              value: emailInput, onChange: e => setEmailInput(e.target.value),
+              className: 'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500'
+            }),
+            React.createElement('input', {
+              type: 'password', placeholder: '비밀번호 (6자 이상)',
+              value: pwInput, onChange: e => setPwInput(e.target.value),
+              onKeyDown: e => { if (e.key === 'Enter' && !emailLoading) handleEmailAuth(); },
+              className: 'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500'
+            }),
+            emailMode === 'signup' && React.createElement('input', {
+              type: 'password', placeholder: '비밀번호 확인',
+              value: pwConfirm, onChange: e => setPwConfirm(e.target.value),
+              onKeyDown: e => { if (e.key === 'Enter' && !emailLoading) handleEmailAuth(); },
+              className: 'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500'
+            }),
+            emailError && React.createElement('p', { className: 'text-red-400 text-xs px-1' }, emailError),
+            React.createElement('button', {
+              onClick: handleEmailAuth,
+              disabled: emailLoading,
+              className: 'w-full py-4 gradient-primary rounded-xl font-bold text-white disabled:opacity-50 transition-all active:scale-[0.98]'
+            }, emailLoading ? '처리 중...' : emailMode === 'login' ? '로그인' : '회원가입')
+          )
+        )
+      );
+    }
+
     return React.createElement('div', { className: 'fixed inset-0 z-[200] flex flex-col bg-[#1a1a2e]' },
-      // 헤더
       React.createElement('div', { className: 'flex items-center justify-between px-5 py-4 border-b border-white/10' },
-        React.createElement('button', {
-          onClick: () => setShowLogin(false),
-          className: 'p-2 hover:bg-white/10 rounded-lg transition-all'
-        }, React.createElement('span', { className: 'text-gray-300 text-xl' }, '←')),
+        React.createElement('button', { onClick: () => setShowLogin(false), className: 'p-2 hover:bg-white/10 rounded-lg transition-all' },
+          React.createElement('span', { className: 'text-gray-300 text-xl' }, '←')),
         React.createElement('span', { className: 'font-bold text-white' }, '로그인 / 회원가입'),
         React.createElement('div', { className: 'w-10' })
       ),
-      // 본문
       React.createElement('div', { className: 'flex-1 flex flex-col items-center justify-center px-6 pb-10' },
-        // 로고 & 소개
         React.createElement('div', { className: 'text-center mb-10' },
           React.createElement('div', { className: 'text-5xl mb-4' }, '🔮'),
           React.createElement('h1', { className: 'text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2' }, '사주ON'),
           React.createElement('p', { className: 'text-sm text-gray-400 leading-relaxed' }, 'AI가 읽어주는 나의 사주', React.createElement('br'), '로그인하고 무료로 시작하세요')
         ),
-        // 소셜 로그인 버튼들
         React.createElement('div', { className: 'w-full max-w-sm space-y-3' },
           // 카카오 (실제 SDK 연동)
           React.createElement('button', {
             onClick: () => {
               const key = 'f68dda02192f5417b547eb2db8368d3d';
-              if (!window.Kakao) {
-                alert('카카오 SDK를 불러오지 못했습니다.\n잠시 후 페이지를 새로고침 해주세요.');
-                return;
-              }
-              if (!window.Kakao.isInitialized()) {
-                window.Kakao.init(key);
-              }
+              if (!window.Kakao) { alert('카카오 SDK를 불러오지 못했습니다.\n잠시 후 페이지를 새로고침 해주세요.'); return; }
+              if (!window.Kakao.isInitialized()) { window.Kakao.init(key); }
               loginWithKakao();
             },
             className: 'w-full flex items-center justify-between px-5 py-4 bg-[#FEE500] text-black rounded-2xl font-semibold hover:brightness-95 transition-all active:scale-[0.98]'
@@ -5060,21 +5150,16 @@ ${pillarDesc2}
             ),
             React.createElement('span', { className: 'text-black/40 text-sm' }, '→')
           ),
-
           // 구글 (Firebase 실제 연동)
           React.createElement('button', {
             onClick: async () => {
               const auth = window._firebaseAuth;
               const provider = window._googleProvider;
-              if (!auth || !provider) {
-                alert('구글 로그인 준비 중입니다. 잠시 후 다시 시도해주세요.');
-                return;
-              }
+              if (!auth || !provider) { alert('구글 로그인 준비 중입니다. 잠시 후 다시 시도해주세요.'); return; }
               try {
                 const result = await auth.signInWithPopup(provider);
                 const user = result.user;
-                const email = user.email || `google_${user.uid}@google.user`;
-                handleLogin('google', email, user.displayName || '구글 회원');
+                handleLogin('google', user.email || 'google@user', user.displayName || '구글 회원');
               } catch(err) {
                 if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                   console.error('구글 로그인 오류:', err);
@@ -5094,9 +5179,23 @@ ${pillarDesc2}
               React.createElement('span', { className: 'text-base' }, '구글로 시작하기')
             ),
             React.createElement('span', { className: 'text-black/30 text-sm' }, '→')
+          ),
+          React.createElement('div', { className: 'flex items-center gap-3 my-1' },
+            React.createElement('div', { className: 'flex-1 h-px bg-white/10' }),
+            React.createElement('span', { className: 'text-xs text-gray-600' }, '또는'),
+            React.createElement('div', { className: 'flex-1 h-px bg-white/10' })
+          ),
+          React.createElement('button', {
+            onClick: () => setEmailTab(true),
+            className: 'w-full flex items-center justify-between px-5 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-semibold hover:bg-white/10 transition-all active:scale-[0.98]'
+          },
+            React.createElement('div', { className: 'flex items-center gap-3' },
+              React.createElement('span', { className: 'text-xl' }, '✉️'),
+              React.createElement('span', { className: 'text-base' }, '이메일로 시작하기')
+            ),
+            React.createElement('span', { className: 'text-gray-500 text-sm' }, '→')
           )
         ),
-        // 안내 문구
         React.createElement('p', { className: 'text-xs text-gray-600 text-center mt-8 leading-relaxed' },
           '로그인 시 서비스 이용약관 및 개인정보 처리방침에', React.createElement('br'), '동의하는 것으로 간주됩니다'
         )
