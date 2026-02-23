@@ -507,40 +507,32 @@ function App() {
   // 사이드 메뉴 상태
   const [showSideMenu, setShowSideMenu] = useState(false);
 
-  // ===== 카카오 로그인 리다이렉트 복귀 처리 =====
-  React.useEffect(() => {
-    const code = urlParams.get('code');
-    const kakaoError = urlParams.get('error');
-    if (kakaoError) {
-      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-      if (kakaoError !== 'access_denied') alert('카카오 로그인에 실패했습니다.');
-      return;
-    }
-    if (code) {
-      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-      if (!window.Kakao) return;
-      if (!window.Kakao.isInitialized()) window.Kakao.init('f68dda02192f5417b547eb2db8368d3d');
-      // 인가코드 방식: 토큰 교환 후 사용자 정보 조회
-      // Worker 경유 토큰 교환 (CORS 우회)
-      fetch(`${PAYMENT_WORKER}/kakao-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, redirect_uri: 'https://ksw80329-coder.github.io/sajuon/' }),
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          handleLogin('kakao', data.email, data.nickname);
-        } else {
-          throw new Error(data.message || '카카오 로그인 실패');
-        }
-      })
-      .catch(err => {
-        console.error('카카오 로그인 오류:', err);
-        alert('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
-      });
-    }
-  }, []);
+  // ===== 카카오 로그인 (팝업 방식) =====
+  const loginWithKakao = () => {
+    if (!window.Kakao) { alert('카카오 SDK 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+    if (!window.Kakao.isInitialized()) window.Kakao.init('f68dda02192f5417b547eb2db8368d3d');
+    window.Kakao.Auth.login({
+      success: (authObj) => {
+        window.Kakao.Auth.setAccessToken(authObj.access_token);
+        window.Kakao.API.request({
+          url: '/v2/user/me',
+          success: (res) => {
+            const email = res.kakao_account?.email || `kakao_${res.id}@kakao.user`;
+            const nickname = res.kakao_account?.profile?.nickname || '';
+            handleLogin('kakao', email, nickname);
+          },
+          fail: (err) => {
+            console.error('카카오 사용자 정보 오류:', err);
+            handleLogin('kakao', `kakao_${Date.now()}@kakao.user`, '');
+          }
+        });
+      },
+      fail: (err) => {
+        console.error('카카오 로그인 실패:', err);
+        if (err.error !== 'access_denied') alert('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+      }
+    });
+  };
 
   // ===== 토스 결제 복원 (결제 완료 후 페이지 리다이렉트 처리) =====
   React.useEffect(() => {
@@ -4586,11 +4578,7 @@ ${isSangsaeng
               if (!window.Kakao.isInitialized()) {
                 window.Kakao.init(key);
               }
-              // SDK 2.x: authorize() 방식 (팝업 → 리다이렉트)
-              window.Kakao.Auth.authorize({
-                redirectUri: 'https://ksw80329-coder.github.io/sajuon/',
-                scope: 'profile_nickname',
-              });
+              loginWithKakao();
             },
             className: 'w-full flex items-center justify-between px-5 py-4 bg-[#FEE500] text-black rounded-2xl font-semibold hover:brightness-95 transition-all active:scale-[0.98]'
           },
