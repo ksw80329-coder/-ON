@@ -2311,7 +2311,7 @@ ${pillarDesc}
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: 8000,
           messages: [{ role: 'user', content: prompt }]
         })
@@ -2717,7 +2717,7 @@ ${pillarDesc}
       const aiFetchC = fetch('https://sajuon-payment.godwk15.workers.dev/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] })
       })
       .then(r => r.json())
       .then(data => {
@@ -4759,7 +4759,7 @@ ${pillarDesc2}
       const aiFetchY = fetch('https://sajuon-payment.godwk15.workers.dev/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] })
       })
       .then(r => r.json())
       .then(data => {
