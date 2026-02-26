@@ -2312,7 +2312,10 @@ ${pillarDesc}
       .then(r => r.json())
       .then(data => {
         const text = data.content?.[0]?.text || '';
-        console.log('AI 사주 응답 길이:', text.length, '미리보기:', text.slice(0,100));
+        console.log('===== AI 사주 응답 =====');
+        console.log('길이:', text.length);
+        console.log('에러:', data.error);
+        console.log('전체내용:', text.slice(0,500));
         let sections = null;
         try {
           const clean = text.replace(/```json[\s\S]*?```|```/g, s => s.startsWith('```json') ? s.slice(7,-3) : '').trim();
@@ -2634,7 +2637,7 @@ ${pillarDesc}
     const r2 = person2.result || analyzeSaju(person2.year, person2.month, person2.day, person2.hour, person2.minute, person2.isLunar, false);
 
     // ===== AI 궁합 해설 =====
-    const _compatCacheKey = `ai_compat_${person1.id}_${person2.id}_${compatRelation}`;
+    const _compatCacheKey = `ai_compat_v2_${person1.id}_${person2.id}_${compatRelation}`;
     const [aiCompatSections, setAiCompatSections] = React.useState(() => {
       try { const c = localStorage.getItem(_compatCacheKey); return c ? JSON.parse(c) : null; } catch(e) { return null; }
     });
@@ -4681,7 +4684,7 @@ ${isSangsaeng
     const yearlyData = generateYearlyInterpretation(r, person, 2026);
 
     // ===== AI 신년운세 해설 =====
-    const _yearlyCacheKey = `ai_yearly_2026_${person.id}`;
+    const _yearlyCacheKey = `ai_yearly_2026_v2_${person.id}`;
     const [aiYearlySections, setAiYearlySections] = React.useState(() => {
       try { const c = localStorage.getItem(_yearlyCacheKey); return c ? JSON.parse(c) : null; } catch(e) { return null; }
     });
