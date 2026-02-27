@@ -403,7 +403,7 @@ const IMP_CODE        = 'imp60556156';                                   // 포�
 const CHANNEL_KAKAO   = 'channel-key-75ce192f-2096-4d4b-af96-a53da4e69b13'; // 카카오페이 채널키
 const CHANNEL_TOSS    = 'channel-key-30262341-2209-4aab-93f3-805737438ec0';  // 토스페이 채널키
 const PAYMENT_WORKER  = 'https://api.sajuon.kr';
-const DEV_MODE = true; // 임시 // ← true로 바꾸면 결제 없이 상세 사주 결과 바로 진입        // Cloudflare Worker
+const DEV_MODE = true; // 테스트용 // ← true로 바꾸면 결제 없이 상세 사주 결과 바로 진입        // Cloudflare Worker
 
 // 카카오 SDK는 <head>에서 이미 초기화됨 (중복 방지)
 console.log('Kakao 초기화 상태:', window.Kakao?.isInitialized());
@@ -731,7 +731,7 @@ function App() {
         React.createElement('div', { className: 'h-1 bg-white/10 rounded-full overflow-hidden' },
           React.createElement('div', {
             className: 'h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full',
-            style: { animation: 'progressBar 20s linear forwards' }
+            style: { animation: 'progressBar 35s cubic-bezier(0.1, 0.4, 0.6, 1) forwards' }
           })
         )
       ),
@@ -747,7 +747,7 @@ function App() {
       ),
 
       React.createElement('style', null, `
-        @keyframes progressBar { from { width: 0% } to { width: 95% } }
+        @keyframes progressBar { 0% { width: 0% } 60% { width: 70% } 85% { width: 85% } 95% { width: 90% } 100% { width: 95% } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
       `)
     );
@@ -2322,10 +2322,18 @@ ${pillarDesc}
 - ${inp.name}님 이름 자연스럽게 3~4회 언급
 - 각 섹션 제목은 이 사람의 사주를 읽고 딱 이 사람한테만 맞는 문장으로 (예: "불꽃을 품은 수, 화려한 척 누구보다 섬세한 사람" / "갑목에 경금이 덮친 팔자 — 자르고 나서야 빛나는 나무")
 
+[깊이 & 분량 기준 - 매우 중요]
+- 각 섹션 반드시 1200자 이상 (줄이면 안 됨, 중요한 내용은 생략 없이 전부 서술)
+- 단순 특징 나열이 아닌 "왜 그런지" 명리학적 근거까지 풀어서 설명
+- 실제 삶에서 어떻게 나타나는지 구체적 상황과 예시 포함
+- 조언은 막연하지 않게, 이 사람 사주에 딱 맞는 구체적 행동으로
+- 틀린 정보 절대 금지 — 불확실하면 "~경향이 있다", "~가능성이 높다"로 표현
+- 전문적이되 쉬운 어휘 — 한자어는 반드시 한글 풀이와 함께
+
 [출력 형식 - 반드시 JSON만, 다른 텍스트 없이]
 {
   "sections": [
-    { "icon": "이모지", "color": "tailwind 텍스트 색상 클래스", "title": "이 사람 전용 제목", "content": "800~1000자 분석 내용" }
+    { "icon": "이모지", "color": "tailwind 텍스트 색상 클래스", "title": "이 사람 전용 제목", "content": "1200~1500자 분석 내용" }
   ]
 }
 
@@ -2343,7 +2351,7 @@ ${pillarDesc}
       const aiFetch = fetch('https://sajuon.kr/q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:4096,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
+        body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:6000,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
       })
       .then(r => r.json())
       .then(data => {
@@ -2607,6 +2615,11 @@ ${pillarDesc}
             alert('두 사람의 관계를 선택해주세요.');
             return;
           }
+          if (DEV_MODE) { 
+            const fakeCompat = { person1Id: compatPerson1, person2Id: compatPerson2, relation: compatRelation, date: new Date().toLocaleDateString('ko-KR'), person1Name: persons.find(p=>p.id===compatPerson1)?.name||'', person2Name: persons.find(p=>p.id===compatPerson2)?.name||'' };
+            setSavedCompatibility(prev => { const filtered = prev.filter(c=>!(c.person1Id===compatPerson1&&c.person2Id===compatPerson2&&c.relation===compatRelation)); return [...filtered, fakeCompat]; });
+            setScreen('compatibility-result'); return; 
+          }
           openPayment({ name: '궁합 분석', price: 1000, stars: 10 });
         }, 
         className: 'w-full mt-6 py-4 gradient-gold rounded-2xl font-bold text-lg' 
@@ -2746,7 +2759,7 @@ ${pillarDesc}
       const aiFetchC = fetch('https://sajuon.kr/q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:4096,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
+        body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:6000,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
       })
       .then(r => r.json())
       .then(data => {
@@ -4654,7 +4667,12 @@ ${isSangsaeng
           if (alreadyYearlyPaid) {
             setScreen('yearly-result');
           } else {
-            openPayment({ name: '2026 신년운세', price: 1900, stars: 19 });
+            if (DEV_MODE) { 
+            const fakePerson = persons.find(p=>p.id===yearlyPerson);
+            if (fakePerson && !savedYearly.find(y=>y.personId===yearlyPerson)) setSavedYearly(prev=>[...prev, { personId: yearlyPerson, personName: fakePerson.name, date: new Date().toLocaleDateString('ko-KR') }]);
+            setScreen('yearly-result'); return; 
+          }
+          openPayment({ name: '2026 신년운세', price: 1900, stars: 19 });
           }
         }, 
         className: (() => {
@@ -4788,7 +4806,7 @@ ${pillarDesc2}
       const aiFetchY = fetch('https://sajuon.kr/q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:4096,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
+        body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:6000,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
       })
       .then(r => r.json())
       .then(data => {
