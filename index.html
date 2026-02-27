@@ -2807,13 +2807,16 @@ ${pillarDesc}
         try {
           sections = robustParseAI(text);
         } catch(e) { console.error('궁합 JSON 파싱 실패:', e.message); }
-        if (sections) { try { localStorage.setItem(cacheKey, JSON.stringify(sections)); } catch(e) {} }
-        return sections;
+        if (sections && sections.length > 0) {
+          try { localStorage.setItem(cacheKey, JSON.stringify(sections)); } catch(e) {}
+          return sections;
+        }
+        return null;
       })
       .catch(e => { console.error('궁합 AI fetch 오류:', e); return null; });
       Promise.all([aiFetchC, minLoadC])
       .then(([sections]) => {
-        if (sections) setAiCompatSections(sections);
+        if (sections && sections.length > 0) setAiCompatSections(sections);
         else setAiCompatError(true);
       })
       .finally(() => setAiCompatLoading(false));
@@ -4862,13 +4865,16 @@ ${pillarDesc2}
         try {
           sections = robustParseAI(text);
         } catch(e) { console.error('운세 JSON 파싱 실패:', e.message); }
-        if (sections) { try { localStorage.setItem(cacheKey, JSON.stringify(sections)); } catch(e) {} }
-        return sections;
+        if (sections && sections.length > 0) {
+          try { localStorage.setItem(cacheKey, JSON.stringify(sections)); } catch(e) {}
+          return sections;
+        }
+        return null;
       })
       .catch(e => { console.error('운세 AI fetch 오류:', e); return null; });
       Promise.all([aiFetchY, minLoadY])
       .then(([sections]) => {
-        if (sections) setAiYearlySections(sections);
+        if (sections && sections.length > 0) setAiYearlySections(sections);
         else setAiYearlyError(true);
       })
       .finally(() => setAiYearlyLoading(false));
