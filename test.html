@@ -2340,7 +2340,7 @@ ${pillarDesc}
 8. 지금 당장 써먹는 전략 — 이 사주가 가리키는 방향과 ${inp.name}님에게 맞는 구체적 행동 플랜`;
 
       const minLoad = new Promise(resolve => setTimeout(resolve, 30000));
-      const aiFetch = fetch('https://sajuon-payment.godwk15.workers.dev/q', {
+      const aiFetch = fetch('https://sajuon.kr/q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:4096,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
@@ -2743,7 +2743,7 @@ ${pillarDesc}
 6. ${person1.name}에게, 그리고 ${person2.name}에게 — 각자에게 드리는 솔직한 개인 조언, 이 관계를 더 잘 굴러가게 만드는 각자의 실천법`;
 
       const minLoadC = new Promise(resolve => setTimeout(resolve, 30000));
-      const aiFetchC = fetch('https://sajuon-payment.godwk15.workers.dev/q', {
+      const aiFetchC = fetch('https://sajuon.kr/q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:4096,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
@@ -4785,7 +4785,7 @@ ${pillarDesc2}
 6. 언제 치고 나가고 언제 쉬어야 하나 — 상반기/하반기 에너지 흐름, 올해의 황금 타이밍과 주의 시기`;
 
       const minLoadY = new Promise(resolve => setTimeout(resolve, 30000));
-      const aiFetchY = fetch('https://sajuon-payment.godwk15.workers.dev/q', {
+      const aiFetchY = fetch('https://sajuon.kr/q', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ d: (()=>{ const s=JSON.stringify({max_tokens:4096,messages:[{role:'user',content:prompt}]}); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return btoa(bin); })() })
