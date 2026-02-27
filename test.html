@@ -2386,7 +2386,7 @@ ${pillarDesc}
       };
       const aiFetch = fetch('https://sajuon.kr/q', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' },
         body: (()=>{ const s=JSON.stringify(sajuPayload); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return JSON.stringify({b:btoa(bin)}); })()
       })
       .then(r => r.json())
@@ -2738,12 +2738,12 @@ ${pillarDesc}
       const el2Full = STEMS.elements[r2.dsi];
       const p1PillarDesc = ['year','month','day','hour'].map(k => {
         const p = r1.pillars[k]; if (!p) return '';
-        return `${({year:'연',month:'월',day:'일',hour:'시'})[k]}주: ${p.stem}(${STEMS.korean[p.si]},${STEMS.elements[p.si]}) / ${p.branch}`;
-      }).filter(Boolean).join(', ');
+        return `${p.stem}${p.branch}`;
+      }).filter(Boolean).join(' ');
       const p2PillarDesc = ['year','month','day','hour'].map(k => {
         const p = r2.pillars[k]; if (!p) return '';
-        return `${({year:'연',month:'월',day:'일',hour:'시'})[k]}주: ${p.stem}(${STEMS.korean[p.si]},${STEMS.elements[p.si]}) / ${p.branch}`;
-      }).filter(Boolean).join(', ');
+        return `${p.stem}${p.branch}`;
+      }).filter(Boolean).join(' ');
 
       const prompt = `당신은 명리학 전문가이자 날카로운 인사이트를 가진 글쓰기 감각의 분석가입니다.
 아래 두 사람의 사주 데이터를 바탕으로, 두 사람이 "이게 진짜 우리 사이 얘기잖아!" 싶을 만큼 구체적이고 솔직한 궁합 분석을 써주세요.
@@ -2795,7 +2795,7 @@ ${pillarDesc}
       };
       const aiFetchC = fetch('https://sajuon.kr/q', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' },
         body: (()=>{ const s=JSON.stringify(compatPayload); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return JSON.stringify({b:btoa(bin)}); })()
       
       })
@@ -4849,7 +4849,7 @@ ${pillarDesc2}
       };
       const aiFetchY = fetch('https://sajuon.kr/q', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' },
         body: (()=>{ const s=JSON.stringify(yearlyPayload); const b=new TextEncoder().encode(s); let bin=''; b.forEach(c=>bin+=String.fromCharCode(c)); return JSON.stringify({b:btoa(bin)}); })()
       })
       .then(r => r.json())
