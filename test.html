@@ -2319,11 +2319,9 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
       setAiError(false);
 
       const pillarDesc = ['year','month','day','hour'].map(k => {
-        const p = r.pillars[k];
-        if (!p) return '';
-        const sinsal = r.pillarSinsal[k]?.join(', ') || '없음';
-        return `${labels[k] === '연주' ? '연주' : labels[k] === '월주' ? '월주' : labels[k] === '일주' ? '일주' : '시주'}: 천간 ${p.stem}(${STEMS.korean[p.si]}, ${STEMS.elements[p.si]}), 지지 ${p.branch}(${p.branchKr || ''}) | 신살: ${sinsal}`;
-      }).filter(Boolean).join('\n');
+        const p = r.pillars[k]; if (!p) return '';
+        return `${p.stem}${p.branch}`;
+      }).filter(Boolean).join(' ');
 
       const feDesc = Object.entries(r.fe.pct).map(([k,v]) => `${k}: ${v}%`).join(', ');
       const strongEl = Object.entries(r.fe.pct).sort((a,b)=>b[1]-a[1])[0];
