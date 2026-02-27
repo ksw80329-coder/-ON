@@ -2616,7 +2616,7 @@ ${pillarDesc}
             return;
           }
           if (DEV_MODE) { 
-            const fakeCompat = { person1Id: compatPerson1, person2Id: compatPerson2, relation: compatRelation, date: new Date().toLocaleDateString('ko-KR'), person1Name: persons.find(p=>p.id===compatPerson1)?.name||'', person2Name: persons.find(p=>p.id===compatPerson2)?.name||'' };
+            const fakeCompat = { person1Id: compatPerson1, person2Id: compatPerson2, relation: compatRelation, date: new Date().toLocaleDateString('ko-KR'), person1Name: savedSaju.find(p=>String(p.id)===String(compatPerson1))?.name||'', person2Name: savedSaju.find(p=>String(p.id)===String(compatPerson2))?.name||'' };
             setSavedCompatibility(prev => { const filtered = prev.filter(c=>!(c.person1Id===compatPerson1&&c.person2Id===compatPerson2&&c.relation===compatRelation)); return [...filtered, fakeCompat]; });
             setScreen('compatibility-result'); return; 
           }
@@ -4668,7 +4668,7 @@ ${isSangsaeng
             setScreen('yearly-result');
           } else {
             if (DEV_MODE) { 
-            const fakePerson = persons.find(p=>p.id===yearlyPerson);
+            const fakePerson = savedSaju.find(p=>String(p.id)===String(yearlyPerson));
             if (fakePerson && !savedYearly.find(y=>y.personId===yearlyPerson)) setSavedYearly(prev=>[...prev, { personId: yearlyPerson, personName: fakePerson.name, date: new Date().toLocaleDateString('ko-KR') }]);
             setScreen('yearly-result'); return; 
           }
