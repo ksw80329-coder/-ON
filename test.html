@@ -1778,7 +1778,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
             person2Id: compatPerson2,
             person1Name: person1.name,
             person2Name: person2.name,
-            relation: {'couple':'1','friend':'2','business':'3','parent':'4','sibling':'5','etc':'6'}[compatRelation]||'1',
+            relation: {'couple':'1','friend':'2','business':'3','parent_child':'4','sibling':'5','etc':'6','grandparent':'7','relative':'8','mentor':'9','rival':'10'}[compatRelation]||'1',
             date: new Date().toLocaleDateString()
           }]);
         }
@@ -2610,23 +2610,26 @@ ${pillarDesc}
           React.createElement('span', { className: 'text-xl' }, '🔗'),
           React.createElement('span', { className: 'font-bold' }, 'A와 B의 관계는?')
         ),
-        React.createElement('div', { className: 'grid grid-cols-2 gap-2' },
+        React.createElement('select', {
+          value: compatRelation,
+          onChange: (e) => setCompatRelation(e.target.value),
+          className: 'w-full p-3 rounded-xl text-sm font-medium text-white border border-white/10 focus:outline-none focus:border-purple-500 cursor-pointer',
+          style: { background: '#1e1b4b' }
+        },
+          React.createElement('option', { value: '', style: { background: '#1e1b4b' } }, '-- 관계를 선택해주세요 --'),
           [
-            { value: 'couple', label: '연인/배우자', icon: '💑' },
-            { value: 'parent', label: '부모-자녀', icon: '👨‍👧' },
-            { value: 'sibling', label: '형제/자매', icon: '👫' },
-            { value: 'friend', label: '친구', icon: '🤝' },
-            { value: 'business', label: '직장/비즈니스', icon: '💼' },
-            { value: 'etc', label: '기타', icon: '👥' }
-          ].map(rel => 
-            React.createElement('button', {
-              key: rel.value,
-              onClick: () => setCompatRelation(rel.value),
-              className: `p-3 rounded-xl text-sm font-medium transition-all ${compatRelation === rel.value ? 'bg-purple-500 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}`
-            },
-              React.createElement('span', { className: 'mr-2' }, rel.icon),
-              rel.label
-            )
+            { value: 'couple', label: '💑 연인/배우자' },
+            { value: 'friend', label: '🤝 친구' },
+            { value: 'business', label: '💼 직장/비즈니스' },
+            { value: 'parent_child', label: '👨\u200d👧 부모-자녀' },
+            { value: 'grandparent', label: '👴 조부모-손자녀' },
+            { value: 'sibling', label: '👫 형제/자매' },
+            { value: 'relative', label: '👪 친척' },
+            { value: 'mentor', label: '🎓 스승-제자' },
+            { value: 'rival', label: '⚔️ 라이벌/경쟁자' },
+            { value: 'etc', label: '👥 기타' }
+          ].map(rel =>
+            React.createElement('option', { key: rel.value, value: rel.value, style: { background: '#1e1b4b' } }, rel.label)
           )
         )
       ),
@@ -2645,7 +2648,7 @@ ${pillarDesc}
             return;
           }
           if (DEV_MODE) { 
-            const fakeCompat = { person1Id: compatPerson1, person2Id: compatPerson2, relation: {'couple':'1','friend':'2','business':'3','parent':'4','sibling':'5','etc':'6'}[compatRelation]||'1', date: new Date().toLocaleDateString('ko-KR'), person1Name: savedSaju.find(p=>String(p.id)===String(compatPerson1))?.name||'', person2Name: savedSaju.find(p=>String(p.id)===String(compatPerson2))?.name||'' };
+            const fakeCompat = { person1Id: compatPerson1, person2Id: compatPerson2, relation: {'couple':'1','friend':'2','business':'3','parent_child':'4','sibling':'5','etc':'6','grandparent':'7','relative':'8','mentor':'9','rival':'10'}[compatRelation]||'1', date: new Date().toLocaleDateString('ko-KR'), person1Name: savedSaju.find(p=>String(p.id)===String(compatPerson1))?.name||'', person2Name: savedSaju.find(p=>String(p.id)===String(compatPerson2))?.name||'' };
             setSavedCompatibility(prev => { const filtered = prev.filter(c=>!(c.person1Id===compatPerson1&&c.person2Id===compatPerson2&&c.relation===compatRelation)); return [...filtered, fakeCompat]; });
             setScreen('compatibility-result'); return; 
           }
@@ -2667,7 +2670,7 @@ ${pillarDesc}
       React.createElement('div', { className: 'space-y-2' },
         savedCompatibility.map((compat, i) => {
           const relationLabels = { couple: '연인', parent: '부모-자녀', sibling: '형제', friend: '친구', business: '직장', etc: '기타' };
-          const relationIcons = { couple: '💑', parent: '👨‍👧', sibling: '👫', friend: '🤝', business: '💼', etc: '👥' };
+          const relationIcons = { couple: '💑', parent_child: '👨‍👧', sibling: '👫', friend: '🤝', business: '💼', etc: '👥', grandparent: '👴', relative: '👪', mentor: '🎓', rival: '⚔️' };
           return React.createElement('div', { 
             key: i, 
             onClick: () => {
@@ -2714,7 +2717,7 @@ ${pillarDesc}
     const r2 = person2.result || analyzeSaju(person2.year, person2.month, person2.day, person2.hour, person2.minute, person2.isLunar, false);
 
     // ===== AI 궁합 해설 =====
-    const _compatRelNorm = {'couple':'1','friend':'2','business':'3','parent':'4','sibling':'5','etc':'6'}[compatRelation] || compatRelation;
+    const _compatRelNorm = {'couple':'1','friend':'2','business':'3','parent_child':'4','sibling':'5','etc':'6','grandparent':'7','relative':'8','mentor':'9','rival':'10'}[compatRelation] || compatRelation;
     const _compatCacheKey = `ai_compat_${person1.id}_${person2.id}_${_compatRelNorm}`;
     const [aiCompatSections, setAiCompatSections] = React.useState(() => {
       try { const c = localStorage.getItem(_compatCacheKey); const p = c ? JSON.parse(c) : null; return Array.isArray(p) && p.length > 0 ? p : null; } catch(e) { return null; }
@@ -2788,7 +2791,7 @@ ${pillarDesc}
       const minLoadC = new Promise(resolve => setTimeout(resolve, 60000));
       const compatPayload = {
         t: '2',
-        relation: {'couple':'1','friend':'2','business':'3','parent':'4','sibling':'5','etc':'6'}[compatRelation]||'1',
+        relation: {'couple':'1','friend':'2','business':'3','parent_child':'4','sibling':'5','etc':'6','grandparent':'7','relative':'8','mentor':'9','rival':'10'}[compatRelation]||'1',
         p1: { name: person1.name, gender: person1.gender, ilgan: STEMS.names[r1.dsi], ilganKr: STEMS.korean[r1.dsi], pillars: p1PillarDesc, sinsal: p1Sinsal.join(', '), fe: Object.entries(r1.fe.pct).map(([k,v])=>`${k}:${v}%`).join(', ') },
         p2: { name: person2.name, gender: person2.gender, ilgan: STEMS.names[r2.dsi], ilganKr: STEMS.korean[r2.dsi], pillars: p2PillarDesc, sinsal: p2Sinsal.join(', '), fe: Object.entries(r2.fe.pct).map(([k,v])=>`${k}:${v}%`).join(', ') }
       };
@@ -4907,7 +4910,41 @@ ${pillarDesc2}
           '⚠️ 신중함이 필요한 해'
         )
       ),
-      // AI 로딩 중이면 로딩화면 먼저, 완료되면 AI 해설, 에러시 기존 템플릿
+      // 만세력 표
+      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+        React.createElement('div', { className: 'p-3 gradient-primary text-white text-center font-bold' }, '📊 원국 만세력'),
+        React.createElement('div', { className: 'p-3' },
+          React.createElement('div', { className: 'grid grid-cols-5 gap-1 text-center text-xs mb-1' },
+            React.createElement('div', { className: 'text-gray-400' }, ''),
+            React.createElement('div', { className: 'text-gray-400' }, '연주'),
+            React.createElement('div', { className: 'text-gray-400' }, '월주'),
+            React.createElement('div', { className: 'text-gray-400' }, '일주'),
+            React.createElement('div', { className: 'text-gray-400' }, '시주')
+          ),
+          React.createElement('div', { className: 'grid grid-cols-5 gap-1 text-center text-xs mb-1' },
+            React.createElement('div', { className: 'text-gray-400 py-1' }, '천간'),
+            ...['year','month','day','hour'].map(k => {
+              const pl = r.pillars[k];
+              if (!pl) return React.createElement('div', { key: 'sy'+k, className: 'py-1 text-gray-500' }, '-');
+              const ec = {'목':'text-green-400','화':'text-red-400','토':'text-yellow-400','금':'text-gray-300','수':'text-blue-400'}[STEMS.elements[pl.si]]||'text-white';
+              return React.createElement('div', { key: 'sy'+k, className: `py-1 font-bold text-lg ${ec}` }, pl.stem);
+            })
+          ),
+          React.createElement('div', { className: 'grid grid-cols-5 gap-1 text-center text-xs' },
+            React.createElement('div', { className: 'text-gray-400 py-1' }, '지지'),
+            ...['year','month','day','hour'].map(k => {
+              const pl = r.pillars[k];
+              if (!pl) return React.createElement('div', { key: 'bry'+k, className: 'py-1 text-gray-500' }, '-');
+              const ec = {'목':'text-green-400','화':'text-red-400','토':'text-yellow-400','금':'text-gray-300','수':'text-blue-400'}[BRANCHES.elements[pl.bi]]||'text-white';
+              return React.createElement('div', { key: 'bry'+k, className: `py-1 font-bold text-lg ${ec}` }, pl.branch);
+            })
+          ),
+          React.createElement('p', { className: 'text-center text-xs text-amber-400 mt-2 pt-2 border-t border-white/10' },
+            `🔥 2026 병오년(丙午年) · 일간 ${STEMS.korean[r.dsi]}(${STEMS.elements[r.dsi]}) 기운`
+          )
+        )
+      ),
+      // AI 심층 풀이
       aiYearlyLoading
         ? React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
             React.createElement('div', { className: 'p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-bold flex items-center justify-center gap-2' },
@@ -4924,52 +4961,50 @@ ${pillarDesc2}
                 React.createElement(AccordionItem, { key: i, icon: section.icon, color: section.color, title: section.title, content: section.content })
               )
             )
-          : React.createElement('div', null,
-              // 에러시 기존 총운 + 월별+분야별 표시
-              React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-                React.createElement('div', { className: 'p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-bold' }, '📜 총운 해설'),
-                React.createElement('div', { className: 'p-5' },
-                  yearlyData.yearSummary.split('\n\n').map((para, i) =>
-                    para.startsWith('[')
-                      ? React.createElement('div', { key: i, className: 'mt-4 p-3 bg-amber-500/10 rounded-xl' },
-                          React.createElement('p', { className: 'text-sm text-amber-200 font-medium' }, para.split(']')[0] + ']'),
-                          React.createElement('p', { className: 'text-sm text-gray-300 mt-1' }, para.split(']')[1])
-                        )
-                      : React.createElement('p', { key: i, className: 'text-sm text-gray-300 leading-relaxed mb-3' }, para)
-                  )
+          : React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+              React.createElement('div', { className: 'p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-bold' }, '📜 총운 해설'),
+              React.createElement('div', { className: 'p-5' },
+                yearlyData.yearSummary.split('\n\n').map((para, i) =>
+                  para.startsWith('[')
+                    ? React.createElement('div', { key: i, className: 'mt-4 p-3 bg-amber-500/10 rounded-xl' },
+                        React.createElement('p', { className: 'text-sm text-amber-200 font-medium' }, para.split(']')[0] + ']'),
+                        React.createElement('p', { className: 'text-sm text-gray-300 mt-1' }, para.split(']')[1])
+                      )
+                    : React.createElement('p', { key: i, className: 'text-sm text-gray-300 leading-relaxed mb-3' }, para)
                 )
-              ),
-              React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-                React.createElement('div', { className: 'p-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center font-bold' }, '📅 월별 운세'),
-                React.createElement('p', { className: 'text-xs text-gray-400 text-center py-3 border-b border-white/10' }, '💡 각 월을 클릭하면 상세 운세를 확인할 수 있습니다'),
-                React.createElement('div', { className: 'divide-y divide-white/10' },
-                  yearlyData.monthlyFortunes.map((m, i) =>
-                    React.createElement(AccordionItem, {
-                      key: i,
-                      icon: m.score >= 70 ? '🌟' : m.score >= 50 ? '💪' : '🛡️',
-                      color: m.score >= 70 ? 'text-green-400' : m.score >= 50 ? 'text-yellow-400' : 'text-red-400',
-                      subtitle: m.month,
-                      title: m.monthTitle || m.keyword,
-                      content: m.fullDetail || m.advice
-                    })
-                  )
-                )
-              ),
-              React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
-                React.createElement('div', { className: 'p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center font-bold' }, '🎯 분야별 상세 운세'),
-                ['wealth', 'love', 'career', 'health'].map(key => {
-                  const cat = yearlyData.categoryFortunes[key];
-                  return React.createElement(AccordionItem, {
-                    key: key,
-                    icon: cat.title.split(' ')[0],
-                    color: key === 'wealth' ? 'text-emerald-400' : key === 'love' ? 'text-pink-400' : key === 'career' ? 'text-blue-400' : 'text-red-400',
-                    title: cat.title.split(' ')[1],
-                    content: `${cat.summary}\n\n${cat.detail}`
-                  });
-                })
               )
             ),
-
+      // 월별 운세 (항상 표시)
+      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+        React.createElement('div', { className: 'p-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center font-bold' }, '📅 월별 운세'),
+        React.createElement('p', { className: 'text-xs text-gray-400 text-center py-3 border-b border-white/10' }, '💡 각 월을 클릭하면 상세 운세를 확인할 수 있습니다'),
+        React.createElement('div', { className: 'divide-y divide-white/10' },
+          yearlyData.monthlyFortunes.map((m, i) =>
+            React.createElement(AccordionItem, {
+              key: i,
+              icon: m.score >= 70 ? '🌟' : m.score >= 50 ? '💪' : '🛡️',
+              color: m.score >= 70 ? 'text-green-400' : m.score >= 50 ? 'text-yellow-400' : 'text-red-400',
+              subtitle: m.month,
+              title: m.monthTitle || m.keyword,
+              content: m.fullDetail || m.advice
+            })
+          )
+        )
+      ),
+      // 분야별 운세 (항상 표시)
+      React.createElement('div', { className: 'glass rounded-2xl overflow-hidden mt-4' },
+        React.createElement('div', { className: 'p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center font-bold' }, '🎯 분야별 상세 운세'),
+        ['wealth', 'love', 'career', 'health'].map(key => {
+          const cat = yearlyData.categoryFortunes[key];
+          return React.createElement(AccordionItem, {
+            key: key,
+            icon: cat.title.split(' ')[0],
+            color: key === 'wealth' ? 'text-emerald-400' : key === 'love' ? 'text-pink-400' : key === 'career' ? 'text-blue-400' : 'text-red-400',
+            title: cat.title.split(' ')[1],
+            content: `${cat.summary}\n\n${cat.detail}`
+          });
+        })
+      ),
       // 행운 정보
       React.createElement('div', { className: 'glass rounded-2xl p-5 mt-4' },
         React.createElement('h3', { className: 'font-bold mb-4' }, '🍀 2026년 행운의 키워드'),
@@ -5070,7 +5105,7 @@ ${pillarDesc2}
       React.createElement('h3', { className: 'font-bold mb-4' }, '💕 구매한 궁합'),
       savedCompatibility.map((compat, i) => {
         const relationLabels = { couple: '연인', parent: '부모-자녀', sibling: '형제', friend: '친구', business: '직장', etc: '기타' };
-        const relationIcons = { couple: '💑', parent: '👨‍👧', sibling: '👫', friend: '🤝', business: '💼', etc: '👥' };
+        const relationIcons = { couple: '💑', parent_child: '👨‍👧', sibling: '👫', friend: '🤝', business: '💼', etc: '👥', grandparent: '👴', relative: '👪', mentor: '🎓', rival: '⚔️' };
         return React.createElement('div', { 
           key: i, 
           onClick: () => {
@@ -6056,7 +6091,7 @@ ${pillarDesc2}
               React.createElement('div', { className: 'p-3 space-y-2' },
                 savedCompatibility.map((compat, i) => {
                   const relationLabels = { couple: '연인', parent: '부모-자녀', sibling: '형제', friend: '친구', business: '직장', etc: '기타' };
-                  const relationIcons = { couple: '💑', parent: '👨‍👧', sibling: '👫', friend: '🤝', business: '💼', etc: '👥' };
+                  const relationIcons = { couple: '💑', parent_child: '👨‍👧', sibling: '👫', friend: '🤝', business: '💼', etc: '👥', grandparent: '👴', relative: '👪', mentor: '🎓', rival: '⚔️' };
                   return React.createElement('div', { 
                     key: i, 
                     onClick: () => {
