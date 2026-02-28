@@ -2303,7 +2303,7 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
     const allSinsal = [...r.pillarSinsal.year, ...r.pillarSinsal.month, ...r.pillarSinsal.day, ...r.pillarSinsal.hour].filter((v, i, a) => a.indexOf(v) === i);
 
     // ===== AI 해설 생성 =====
-    const _sajuCacheKey = `ai_saju_${inp.name}_${inp.year}_${inp.month}_${inp.day}_${inp.hour}`;
+    const _sajuCacheKey = `ai_saju_v21_${inp.name}_${inp.year}_${inp.month}_${inp.day}_${inp.hour}`;
     const [aiSections, setAiSections] = React.useState(() => {
       try { const c = localStorage.getItem(_sajuCacheKey); const p = c ? JSON.parse(c) : null; return Array.isArray(p) && p.length > 0 ? p : null; } catch(e) { return null; }
     });
@@ -2718,7 +2718,7 @@ ${pillarDesc}
 
     // ===== AI 궁합 해설 =====
     const _compatRelNorm = {'couple':'1','friend':'2','business':'3','parent_child':'4','sibling':'5','etc':'6','grandparent':'7','relative':'8','mentor':'9','rival':'10'}[compatRelation] || compatRelation;
-    const _compatCacheKey = `ai_compat_${person1.id}_${person2.id}_${_compatRelNorm}`;
+    const _compatCacheKey = `ai_compat_v21_${person1.id}_${person2.id}_${_compatRelNorm}`;
     const [aiCompatSections, setAiCompatSections] = React.useState(() => {
       try { const c = localStorage.getItem(_compatCacheKey); const p = c ? JSON.parse(c) : null; return Array.isArray(p) && p.length > 0 ? p : null; } catch(e) { return null; }
     });
@@ -4776,7 +4776,7 @@ ${isSangsaeng
     const yearlyData = generateYearlyInterpretation(r, person, 2026);
 
     // ===== AI 신년운세 해설 =====
-    const _yearlyCacheKey = `ai_yearly_2026_${person.id}`;
+    const _yearlyCacheKey = `ai_yearly_v21_${person.id}`;
     const [aiYearlySections, setAiYearlySections] = React.useState(() => {
       try { const c = localStorage.getItem(_yearlyCacheKey); const p = c ? JSON.parse(c) : null; return Array.isArray(p) && p.length > 0 ? p : null; } catch(e) { return null; }
     });
