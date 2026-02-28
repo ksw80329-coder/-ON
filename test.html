@@ -477,7 +477,7 @@ function App() {
 
   const [showLogin, setShowLogin] = useState(false);
   const [paymentProduct, setPaymentProduct] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!session);
+  const [isLoggedIn, setIsLoggedIn] = useState(DEV_MODE ? true : !!session);
   const [userEmail, setUserEmail] = useState(session?.email || '');
   const [loginMethod, setLoginMethod] = useState(session?.method || '');
   const [userKey, setUserKey] = useState(session?.key || ''); // localStorage 키용 고유값
@@ -1834,9 +1834,8 @@ ${dayEl === '금' || dayEl === '수' ? '따뜻한 성질의 음식: 생강차, �
       }
     }
     
-    // 결과 보기 직전 로그인 유도
-    if (!isLoggedIn) {
-      // 입력한 정보는 state에 저장해두고 로그인 후 결과 보여주기
+    // 결과 보기 직전 로그인 유도 (DEV_MODE에서는 건너뜀)
+    if (!isLoggedIn && !DEV_MODE) {
       setShowLogin(true);
       return;
     }
