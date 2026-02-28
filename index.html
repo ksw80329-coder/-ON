@@ -139,7 +139,20 @@ function getJeolgiPrecise(year, month, day, hour, minute) {
           allTerms.push({ year: y, name: t.name, month: t.month, day: t.day, hour: hh, minute: mm, sajuMonth, epochMs: ms });
         }
       }
-    } catch (e) { console.error('절기 로드 실패:', y, e); }
+    } catch (e) {
+      // 2020년 이전 데이터 없으면 평균 절기일로 fallback
+      const avgDays = {1:6,2:4,3:6,4:5,5:6,6:6,7:7,8:8,9:8,10:8,11:7,12:7};
+      const avgHours = {1:17,2:22,3:15,4:4,5:19,6:7,7:22,8:13,9:1,10:13,11:1,12:11};
+      const solarMonths = [{sm:12,m:1},{sm:1,m:2},{sm:2,m:3},{sm:3,m:4},{sm:4,m:5},{sm:5,m:6},{sm:6,m:7},{sm:7,m:8},{sm:8,m:9},{sm:9,m:10},{sm:10,m:11},{sm:11,m:12}];
+      const names = {1:'소한',2:'입춘',3:'경칩',4:'청명',5:'입하',6:'망종',7:'소서',8:'입추',9:'백로',10:'한로',11:'입동',12:'대설'};
+      for (const entry of solarMonths) {
+        const m = entry.m; const sm = entry.sm;
+        const d = avgDays[m]; const hh = avgHours[m];
+        const ms = Date.UTC(y, m-1, d, hh-9, 0);
+        const nameMap = {1:'소한',2:'입춘',3:'경칩',4:'청명',5:'입하',6:'망종',7:'소서',8:'입추',9:'백로',10:'한로',11:'입동',12:'대설'};
+        allTerms.push({ year: y, name: nameMap[m], month: m, day: d, hour: hh, minute: 0, sajuMonth: sm, epochMs: ms });
+      }
+    }
   }
   
   allTerms.sort((a, b) => a.epochMs - b.epochMs);
